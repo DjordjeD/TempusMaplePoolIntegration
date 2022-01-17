@@ -21,6 +21,7 @@ contract RariTempusPool is TempusPool {
     uint256 private immutable exchangeRateToBackingPrecision;
     uint256 private immutable backingTokenRariPoolIndex;
     uint256 private lastCalculatedInterestRate;
+    uint256 private lastInterestRateUpdate = 0;
 
     constructor(
         IRariFundManager fundManager,
@@ -111,11 +112,15 @@ contract RariTempusPool is TempusPool {
 
     /// @return Updated current Interest Rate with the same precision as the BackingToken
     function updateInterestRate() internal override returns (uint256) {
-        lastCalculatedInterestRate = calculateInterestRate(
-            rariFundManager,
-            yieldBearingToken,
-            backingTokenRariPoolIndex
-        );
+        if (lastInterestRateUpdate != block.timestamp) {
+            lastInterestRateUpdate = block.timestamp;
+
+            lastCalculatedInterestRate = calculateInterestRate(
+                rariFundManager,
+                yieldBearingToken,
+                backingTokenRariPoolIndex
+            );
+        }
 
         require(lastCalculatedInterestRate > 0, "Calculated rate is too small");
 
