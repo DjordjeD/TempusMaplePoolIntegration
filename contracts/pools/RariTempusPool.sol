@@ -82,6 +82,8 @@ contract RariTempusPool is TempusPool {
         rariFundManager.deposit(IERC20Metadata(backingToken).symbol(), amount);
         uint256 postDepositBalance = IERC20(yieldBearingToken).balanceOf(address(this));
 
+        invalidateInterestRate();
+
         return (postDepositBalance - preDepositBalance);
     }
 
@@ -107,6 +109,8 @@ contract RariTempusPool is TempusPool {
         rariFundManager.withdraw(IERC20Metadata(backingToken).symbol(), withdrawalAmountInBackingToken);
         uint256 amountWithdrawn = IERC20(backingToken).balanceOf(address(this)) - preDepositBalance;
 
+        invalidateInterestRate();
+
         return IERC20(backingToken).untrustedTransfer(recipient, amountWithdrawn);
     }
 
@@ -121,10 +125,18 @@ contract RariTempusPool is TempusPool {
                 backingTokenRariPoolIndex
             );
         }
-
         require(lastCalculatedInterestRate > 0, "Calculated rate is too small");
-
         return lastCalculatedInterestRate;
+    }
+
+    event InterestRateInvalidated(uint256 oldRate, uint256 newRate);
+
+    function invalidateInterestRate() private {
+        lastInterestRateUpdate = 0;
+        // DEBUG: remove later
+        uint oldRate = lastCalculatedInterestRate;
+        uint newRate = updateInterestRate();
+        emit InterestRateInvalidated(oldRate, newRate);
     }
 
     /// @return Stored Interest Rate with the same precision as the BackingToken
