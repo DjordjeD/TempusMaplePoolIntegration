@@ -49,7 +49,7 @@ contract YearnVaultMock is ERC20, IYearnVaultV2 {
     }
 
     // yTokens always have the same decimals as their corresponding underlying tokens
-    function decimals() public view override returns (uint8) {
+    function decimals() public view override(ERC20, IERC20Metadata) returns (uint8) {
         return asset.decimals();
     }
 

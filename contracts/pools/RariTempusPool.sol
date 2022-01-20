@@ -16,7 +16,7 @@ contract RariTempusPool is TempusPool {
     using Fixed256xVar for uint256;
 
     bytes32 public constant override protocolName = "Rari";
-    IRariFundManager internal immutable rariFundManager;
+    IRariFundManager private immutable rariFundManager;
 
     uint256 private immutable exchangeRateToBackingPrecision;
     uint256 private immutable backingTokenRariPoolIndex;
@@ -71,7 +71,8 @@ contract RariTempusPool is TempusPool {
     }
 
     function depositToUnderlying(uint256 amount) internal override returns (uint256) {
-        require(msg.value == 0, "ETH deposits not supported");
+        // ETH deposits are not accepted, because it is rejected in the controller
+        assert(msg.value == 0);
 
         // Deposit to Rari Pool
         IERC20(backingToken).safeIncreaseAllowance(address(rariFundManager), amount);

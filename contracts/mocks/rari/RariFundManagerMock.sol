@@ -60,6 +60,16 @@ contract RariFundManagerMock is IRariFundManager {
         return acceptedCurrencies;
     }
 
+    function isValidCurrencyCode(string calldata currencyCode) internal pure returns (bool) {
+        string[] memory currencies = getAcceptedCurrencies();
+        for (uint256 i = 0; i < currencies.length; i++) {
+            if (keccak256(bytes(currencies[i])) == keccak256(bytes(currencyCode))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function getFundBalance() public view override returns (uint256) {
         uint256 backingTokenToUsdRate = rariFundPriceConsumer.getCurrencyPricesInUsd()[_currencyIndex];
 
@@ -100,11 +110,13 @@ contract RariFundManagerMock is IRariFundManager {
     }
 
     /// @notice based on - https://github.com/Rari-Capital/rari-stable-pool-contracts/blob/386aa8811e7f12c2908066ae17af923758503739/contracts/RariFundManager.sol#L572
-    function deposit(string calldata, uint256 amount) external override {
+    function deposit(string calldata currencyCode, uint256 amount) external override {
         if (mockFailNextDepositOrRedeem) {
             setFailNextDepositOrRedeem(false);
             revert("random mock failure from rari");
         }
+
+        require(isValidCurrencyCode(currencyCode), "Unsupported currency");
 
         uint256 rftTotalSupply = IERC20(rariFundToken).totalSupply();
         uint256 fundBalanceUsd = getFundBalance();
@@ -120,11 +132,13 @@ contract RariFundManagerMock is IRariFundManager {
     }
 
     /// @notice based on - https://github.com/Rari-Capital/rari-stable-pool-contracts/blob/386aa8811e7f12c2908066ae17af923758503739/contracts/RariFundManager.sol#L737
-    function withdraw(string calldata, uint256 amount) external override returns (uint256) {
+    function withdraw(string calldata currencyCode, uint256 amount) external override returns (uint256) {
         if (mockFailNextDepositOrRedeem) {
             setFailNextDepositOrRedeem(false);
             revert("random mock failure from rari");
         }
+
+        require(isValidCurrencyCode(currencyCode), "Unsupported currency");
 
         uint256 backingTokenToUsdRate = rariFundPriceConsumer.getCurrencyPricesInUsd()[_currencyIndex];
         uint256 amountUsd = amount.mulfV(backingTokenToUsdRate, 10**asset.decimals()); /// scale to 1e18

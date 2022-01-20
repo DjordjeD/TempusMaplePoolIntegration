@@ -15,7 +15,7 @@ contract YearnTempusPool is TempusPool {
     using UntrustedERC20 for IERC20;
     using Fixed256xVar for uint256;
 
-    IYearnVaultV2 internal immutable yearnVault;
+    IYearnVaultV2 private immutable yearnVault;
     bytes32 public constant override protocolName = "Yearn";
 
     constructor(
@@ -40,6 +40,8 @@ contract YearnTempusPool is TempusPool {
             maxFeeSetup
         )
     {
+        require(vault.decimals() == IERC20Metadata(vault.token()).decimals(), "Decimals precision mismatch");
+
         yearnVault = vault;
     }
 
@@ -50,7 +52,11 @@ contract YearnTempusPool is TempusPool {
         // Deposit to Yearn Vault
         IERC20(backingToken).safeIncreaseAllowance(address(yearnVault), amount);
 
-        return yearnVault.deposit(amount);
+        uint256 preDepositBalance = IERC20(yieldBearingToken).balanceOf(address(this));
+        yearnVault.deposit(amount);
+        uint256 postDepositBalance = IERC20(yieldBearingToken).balanceOf(address(this));
+
+        return (postDepositBalance - preDepositBalance);
     }
 
     function withdrawFromUnderlyingProtocol(uint256 yieldBearingTokensAmount, address recipient)
