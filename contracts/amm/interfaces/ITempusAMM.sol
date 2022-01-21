@@ -73,4 +73,14 @@ interface ITempusAMM {
     /// @dev This function returns the appreciation of one BPT relative to the
     /// underlying tokens. This starts at 1 when the pool is created and grows over time
     function getRate() external view returns (uint256);
+
+    /// @dev This function returns information about the current amplification parameter state
+    function getAmplificationParameter()
+        external
+        view
+        returns (
+            uint256 value,
+            bool isUpdating,
+            uint256 precision
+        );
 }
