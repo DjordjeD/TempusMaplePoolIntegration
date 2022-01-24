@@ -6,9 +6,9 @@ import { generateTempusSharesNames } from '../test/utils/TempusPool';
 
 const EXCHANGE_RATE_PRECISION = 18;
 const YBT_PRECISION = 18;
-const YBT_NAME = "Lido staked ETH";
-const YBT_SYMBOL = "stETH";
-const CONTRACT_NAME = "LidoTempusPool";
+const YBT_NAME = "DAI yVault";
+const YBT_SYMBOL = "yvDAI";
+const CONTRACT_NAME = "YearnTempusPool";
 const MONTH = 60 * 60 * 24 * 30;
 
 async function deploy() {
@@ -95,14 +95,14 @@ async function deploy() {
     process.exit(0)
   }
 
-  const tempusPoolContract = await utils.deployContract(CONTRACT_NAME, poolConstructorArgs, deployerPrivateKey);
-  await utils.waitForContractToBeDeployed(tempusPoolContract.address);
+  // const tempusPoolContract = await utils.deployContract(CONTRACT_NAME, poolConstructorArgs, deployerPrivateKey);
+  // await utils.waitForContractToBeDeployed(tempusPoolContract.address);
 
   const ammConstructorArgs = [
     balancerVault,
     lpName,
     lpSymbol,
-    tempusPoolContract.address,
+    "0xE4342f955F75608b5899Ce721aD8d9234deC90E4",
     amplificationStart,
     amplificationEnd,
     ethers.utils.parseUnits(swapFeePercentage.toString(), 18).toString(),
@@ -115,8 +115,8 @@ async function deploy() {
   const tempusAmmContract = await utils.deployContract("TempusAMM", ammConstructorArgs, deployerPrivateKey, 5500000);
   await utils.waitForContractToBeDeployed(tempusAmmContract.address);
   
-  await utils.generateDeployment(tempusPoolContract, `${CONTRACT_NAME}_${YBT_SYMBOL}_maturity-${maturityTimestamp}`, network.name);
-  await utils.generateDeployment(tempusAmmContract, `TempusAMM_${YBT_SYMBOL}_maturity-${maturityTimestamp}`, network.name);
+  // await utils.generateDeployment(tempusPoolContract, `${CONTRACT_NAME}_${YBT_SYMBOL}_maturity-${maturityTimestamp}`, network.name);
+  // await utils.generateDeployment(tempusAmmContract, `TempusAMM_${YBT_SYMBOL}_maturity-${maturityTimestamp}`, network.name);
 }
 
 
