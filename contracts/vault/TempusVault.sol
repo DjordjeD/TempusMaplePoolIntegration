@@ -26,11 +26,12 @@ contract TempusVault is Ownable {
     }
 
     /// TODO:
-    /// 1. keeper.network integration ?
+    /// 1. allow anyone to call rebalance or impose auth?
     /// 2. impose transfer limits (unless pool has matured)
     /// 3. implement min transfer limits (if only a tiny amount needs to be transferred
     ///             between pools to reach a balanced state, just don't do it.)
     /// 4. whitelist amms
+    //// 5. Calculating liquidity share of given pool --- ( 1 - ( POOL_AMP / TOTAL_POOLS_AMP_SUM ) )
     function rebalance(ITempusAMM[] calldata amms) public onlyOwner {
         require(amms.length > 0); /// TODO: IMPORTANT error msg
         require(amms.length <= 4); /// TODO: IMPORTANT error msg
