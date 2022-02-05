@@ -29,18 +29,18 @@ contract EIP4626TempusPool is TempusPool {
     )
         TempusPool(
             address(_vault),
-            _vault.underlying(),
+            _vault.asset(),
             controller,
             maturity,
-            _vault.exchangeRate(),
-            10**(IERC20Metadata(_vault.underlying()).decimals()),
+            _vault.assetsPerShare(),
+            10**(IERC20Metadata(_vault.asset()).decimals()),
             estYield,
             principalsData,
             yieldsData,
             maxFeeSetup
         )
     {
-        require(_vault.decimals() == IERC20Metadata(_vault.underlying()).decimals(), "Decimals precision mismatch");
+        require(_vault.decimals() == IERC20Metadata(_vault.asset()).decimals(), "Decimals precision mismatch");
 
         vault = _vault;
     }
@@ -53,7 +53,7 @@ contract EIP4626TempusPool is TempusPool {
         IERC20(backingToken).safeIncreaseAllowance(address(vault), amount);
 
         uint256 preDepositBalance = IERC20(yieldBearingToken).balanceOf(address(this));
-        vault.deposit(address(this), amount);
+        vault.deposit(amount, address(this));
         uint256 postDepositBalance = IERC20(yieldBearingToken).balanceOf(address(this));
 
         return (postDepositBalance - preDepositBalance);
@@ -64,18 +64,21 @@ contract EIP4626TempusPool is TempusPool {
         override
         returns (uint256 backingTokenAmount)
     {
-        return vault.withdraw(address(this), recipient, yieldBearingTokensAmount);
+        return vault.withdraw(yieldBearingTokensAmount, recipient, address(this));
     }
 
     /// @return Updated current Interest Rate with the same precision as the BackingToken
     function updateInterestRate() internal view override returns (uint256) {
         vault.previewDeposit(1); // This is called to trigger an exchange rate recalculation.
-        return vault.exchangeRate();
+        return vault.assetsOf() / vault.balanceOf();
+        return vault.previewWithdraw();
+
+        return vault.assetsPerShare();
     }
 
     /// @return Stored Interest Rate with the same precision as the BackingToken
     function currentInterestRate() public view override returns (uint256) {
-        return vault.exchangeRate();
+        return vault.assetsPerShare();
     }
 
     function numAssetsPerYieldToken(uint yieldTokens, uint rate) public view override returns (uint) {
