@@ -35,6 +35,7 @@
     "hardhat-abi-exporter": "^2.2.1",
     "hardhat-deploy": "^0.8.9",
     "hardhat-gas-reporter": "^1.0.4",
+    "husky": "^7.0.0",
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.10",
     "prompt": "^1.2.0",
@@ -48,6 +49,7 @@
     "yahoo-finance": "^0.3.7"
   },
   "scripts": {
+    "prepare": "husky install",
     "build": "npx hardhat compile",
     "test": "cross-env yarn build && npx mocha --require hardhat/register --timeout 10000 --recursive --parallel --extension ts",
     "test:integration:lido": "cross-env yarn build && cross-env INTEGRATION=1 ONLY_POOL=Lido ETH_NODE_URI_MAINNET=https://eth-mainnet.alchemyapi.io/v2/yInmJCdHvCzXe4qAxfPMDFgrbYIGsUhJ HARDHAT_FORK=mainnet HARDHAT_FORK_NUMBER=13533408 npx mocha --require hardhat/register --timeout 120000 --recursive --parallel --extension ts",
