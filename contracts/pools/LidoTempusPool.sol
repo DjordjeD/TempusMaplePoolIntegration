@@ -36,15 +36,14 @@ contract LidoTempusPool is TempusPool {
         referrer = referrerAddress;
     }
 
-    function depositToUnderlying(uint256 amount) internal override returns (uint256) {
+    function depositToUnderlying(uint256 amountBT) internal override returns (uint256 mintedYBT) {
         // Enforced by the controller
-        assert(msg.value == amount);
+        assert(msg.value == amountBT);
 
-        uint256 preDepositBalance = IERC20(yieldBearingToken).balanceOf(address(this));
+        uint256 ybtBefore = balanceOfYBT();
         lido.submit{value: msg.value}(referrer);
 
-        uint256 mintedTokens = IERC20(yieldBearingToken).balanceOf(address(this)) - preDepositBalance;
-        return mintedTokens;
+        mintedYBT = balanceOfYBT() - ybtBefore;
     }
 
     function withdrawFromUnderlyingProtocol(uint256, address) internal pure override returns (uint256) {
@@ -53,7 +52,7 @@ contract LidoTempusPool is TempusPool {
     }
 
     /// @return Updated current Interest Rate as an 1e18 decimal
-    function updateInterestRate() internal view override returns (uint256) {
+    function updateInterestRate() public view override returns (uint256) {
         return lido.getPooledEthByShares(1e18);
     }
 
@@ -66,17 +65,17 @@ contract LidoTempusPool is TempusPool {
 
     /// NOTE: Lido StETH is pegged 1:1 to ETH
     /// @return Asset Token amount
-    function numAssetsPerYieldToken(uint yieldTokens, uint) public pure override returns (uint) {
+    function numAssetsPerYieldToken(uint256 yieldTokens, uint256) public pure override returns (uint256) {
         return yieldTokens;
     }
 
     /// NOTE: Lido StETH is pegged 1:1 to ETH
     /// @return YBT amount
-    function numYieldTokensPerAsset(uint backingTokens, uint) public pure override returns (uint) {
+    function numYieldTokensPerAsset(uint256 backingTokens, uint256) public pure override returns (uint256) {
         return backingTokens;
     }
 
-    function interestRateToSharePrice(uint interestRate) internal pure override returns (uint) {
+    function interestRateToSharePrice(uint256 interestRate) internal pure override returns (uint256) {
         return interestRate; // no conversion needed, praise ETH
     }
 }

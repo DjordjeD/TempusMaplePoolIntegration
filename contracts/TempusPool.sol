@@ -114,7 +114,39 @@ abstract contract TempusPool is ITempusPool, ReentrancyGuard, Ownable, Versioned
         _;
     }
 
-    function depositToUnderlying(uint256 backingAmount) internal virtual returns (uint256 mintedYieldTokenAmount);
+    /// @dev Deposits backing tokens into the underlying protocol
+    /// @param amountBT Amount of BackingTokens to deposit
+    /// @return mintedYBT Amount of minted Yield Bearing Tokens
+    function depositToUnderlying(uint256 amountBT) internal virtual returns (uint256 mintedYBT);
+
+    /// @dev Utility for checking YBT balance of this contract
+    function balanceOfYBT() internal view returns (uint256) {
+        return IERC20(yieldBearingToken).balanceOf(address(this));
+    }
+
+    /// @dev Utility for checking BT balance of this contract
+    function balanceOfBT() internal view returns (uint256) {
+        return IERC20(backingToken).balanceOf(address(this));
+    }
+
+    /// @dev Asserts all of the Backing Tokens are transferred during this operation
+    modifier assertTransferBT(uint256 amountBT) {
+        uint256 btBefore = balanceOfBT();
+        _;
+        uint256 remainingBT = amountBT - (btBefore - balanceOfBT());
+        assert(remainingBT == 0);
+    }
+
+    /// @dev Asserts all of the Yield Bearing Tokens are transferred during this operation (allowing some room for rounding errors)
+    modifier assertTransferYBT(uint256 amountYBT, uint256 errorThreshold) {
+        uint256 ybtBefore = balanceOfYBT();
+        _;
+        uint256 transferredAmount = (ybtBefore - balanceOfYBT());
+        uint256 untransferredAmount = (transferredAmount > amountYBT)
+            ? (transferredAmount - amountYBT)
+            : (amountYBT - transferredAmount);
+        assert(untransferredAmount <= errorThreshold);
+    }
 
     function withdrawFromUnderlyingProtocol(uint256 amount, address recipient)
         internal
@@ -397,7 +429,7 @@ abstract contract TempusPool is ITempusPool, ReentrancyGuard, Ownable, Versioned
     /// pricePerYield = currentYield * (estimatedYield - 1) / (estimatedYield)
     /// Return value decimal precision in backing token precision
     function pricePerYieldShare(uint256 currYield, uint256 estYield) private view returns (uint256) {
-        uint one = exchangeRateONE;
+        uint256 one = exchangeRateONE;
         // in case we have estimate for negative yield
         if (estYield < one) {
             return uint256(0);
@@ -490,19 +522,30 @@ abstract contract TempusPool is ITempusPool, ReentrancyGuard, Ownable, Versioned
     }
 
     /// @dev This updates the underlying pool's interest rate
-    ///      It should be done first thing before deposit/redeem to avoid arbitrage
+    ///      It is done first thing before deposit/redeem to avoid arbitrage
+    ///      It is available to call publically to periodically update interest rates in cases of low volume
     /// @return Updated current Interest Rate, decimal precision depends on specific TempusPool implementation
-    function updateInterestRate() internal virtual returns (uint256);
+    function updateInterestRate() public virtual override returns (uint256);
 
     /// @dev This returns the stored Interest Rate of the YBT (Yield Bearing Token) pool
     ///      it is safe to call this after updateInterestRate() was called
     /// @return Stored Interest Rate, decimal precision depends on specific TempusPool implementation
     function currentInterestRate() public view virtual override returns (uint256);
 
-    function numYieldTokensPerAsset(uint backingTokens, uint interestRate) public view virtual override returns (uint);
+    function numYieldTokensPerAsset(uint256 backingTokens, uint256 interestRate)
+        public
+        view
+        virtual
+        override
+        returns (uint256);
 
-    function numAssetsPerYieldToken(uint yieldTokens, uint interestRate) public view virtual override returns (uint);
+    function numAssetsPerYieldToken(uint256 yieldTokens, uint256 interestRate)
+        public
+        view
+        virtual
+        override
+        returns (uint256);
 
     /// @return Converts an interest rate decimal into a Principal/Yield Share decimal
-    function interestRateToSharePrice(uint interestRate) internal view virtual returns (uint);
+    function interestRateToSharePrice(uint256 interestRate) internal view virtual returns (uint256);
 }

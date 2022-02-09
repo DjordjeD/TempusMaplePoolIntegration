@@ -45,30 +45,35 @@ contract YearnTempusPool is TempusPool {
         yearnVault = vault;
     }
 
-    function depositToUnderlying(uint256 amount) internal override returns (uint256) {
+    function depositToUnderlying(uint256 amountBT)
+        internal
+        override
+        assertTransferBT(amountBT)
+        returns (uint256 mintedYBT)
+    {
         // ETH deposits are not accepted, because it is rejected in the controller
         assert(msg.value == 0);
 
+        uint256 ybtBefore = balanceOfYBT();
+
         // Deposit to Yearn Vault
-        IERC20(backingToken).safeIncreaseAllowance(address(yearnVault), amount);
+        IERC20(backingToken).safeIncreaseAllowance(address(yearnVault), amountBT);
+        yearnVault.deposit(amountBT);
 
-        uint256 preDepositBalance = IERC20(yieldBearingToken).balanceOf(address(this));
-        yearnVault.deposit(amount);
-        uint256 postDepositBalance = IERC20(yieldBearingToken).balanceOf(address(this));
-
-        return (postDepositBalance - preDepositBalance);
+        mintedYBT = balanceOfYBT() - ybtBefore;
     }
 
     function withdrawFromUnderlyingProtocol(uint256 yieldBearingTokensAmount, address recipient)
         internal
         override
+        assertTransferYBT(yieldBearingTokensAmount, 1)
         returns (uint256 backingTokenAmount)
     {
         return yearnVault.withdraw(yieldBearingTokensAmount, recipient);
     }
 
     /// @return Updated current Interest Rate with the same precision as the BackingToken
-    function updateInterestRate() internal view override returns (uint256) {
+    function updateInterestRate() public view override returns (uint256) {
         return yearnVault.pricePerShare();
     }
 
@@ -77,16 +82,16 @@ contract YearnTempusPool is TempusPool {
         return yearnVault.pricePerShare();
     }
 
-    function numAssetsPerYieldToken(uint yieldTokens, uint rate) public view override returns (uint) {
+    function numAssetsPerYieldToken(uint256 yieldTokens, uint256 rate) public view override returns (uint256) {
         return yieldTokens.mulfV(rate, exchangeRateONE);
     }
 
-    function numYieldTokensPerAsset(uint backingTokens, uint rate) public view override returns (uint) {
+    function numYieldTokensPerAsset(uint256 backingTokens, uint256 rate) public view override returns (uint256) {
         return backingTokens.divfV(rate, exchangeRateONE);
     }
 
     /// @dev The rate precision always matches the BackingToken's precision
-    function interestRateToSharePrice(uint interestRate) internal pure override returns (uint) {
+    function interestRateToSharePrice(uint256 interestRate) internal pure override returns (uint256) {
         return interestRate;
     }
 }

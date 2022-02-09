@@ -16,7 +16,7 @@ contract AaveTempusPool is TempusPool {
 
     ILendingPool internal immutable aavePool;
     bytes32 public constant override protocolName = "Aave";
-    uint private immutable exchangeRateToBackingPrecision;
+    uint256 private immutable exchangeRateToBackingPrecision;
 
     constructor(
         IAToken token,
@@ -49,25 +49,33 @@ contract AaveTempusPool is TempusPool {
         }
     }
 
-    function depositToUnderlying(uint256 amount) internal override returns (uint256) {
+    function depositToUnderlying(uint256 amountBT)
+        internal
+        override
+        assertTransferBT(amountBT)
+        returns (uint256 mintedYBT)
+    {
         // ETH deposits are not accepted, because it is rejected in the controller
         assert(msg.value == 0);
 
+        uint256 ybtBefore = balanceOfYBT();
+
         // Deposit to AAVE
-        IERC20(backingToken).safeIncreaseAllowance(address(aavePool), amount);
+        IERC20(backingToken).safeIncreaseAllowance(address(aavePool), amountBT);
         aavePool.deposit(
             address(backingToken),
-            amount,
+            amountBT,
             address(this),
             0 /*referralCode*/
         );
 
-        return amount; // With Aave, the of YBT minted equals to the amount of deposited BT
+        mintedYBT = balanceOfYBT() - ybtBefore;
     }
 
     function withdrawFromUnderlyingProtocol(uint256 yieldBearingTokensAmount, address recipient)
         internal
         override
+        assertTransferYBT(yieldBearingTokensAmount, 1)
         returns (uint256)
     {
         return aavePool.withdraw(backingToken, yieldBearingTokensAmount, recipient);
@@ -78,7 +86,7 @@ contract AaveTempusPool is TempusPool {
     }
 
     /// @return Updated current Interest Rate as an 1e18 decimal
-    function updateInterestRate() internal view override returns (uint256) {
+    function updateInterestRate() public view override returns (uint256) {
         // convert from RAY 1e27 to WAD 1e18 decimal
         return aavePool.getReserveNormalizedIncome(backingToken) / 1e9;
     }
@@ -89,16 +97,16 @@ contract AaveTempusPool is TempusPool {
     }
 
     /// NOTE: Aave AToken is pegged 1:1 with backing token
-    function numAssetsPerYieldToken(uint yieldTokens, uint) public pure override returns (uint) {
+    function numAssetsPerYieldToken(uint256 yieldTokens, uint256) public pure override returns (uint256) {
         return yieldTokens;
     }
 
     /// NOTE: Aave AToken is pegged 1:1 with backing token
-    function numYieldTokensPerAsset(uint backingTokens, uint) public pure override returns (uint) {
+    function numYieldTokensPerAsset(uint256 backingTokens, uint256) public pure override returns (uint256) {
         return backingTokens;
     }
 
-    function interestRateToSharePrice(uint interestRate) internal view override returns (uint) {
+    function interestRateToSharePrice(uint256 interestRate) internal view override returns (uint256) {
         return interestRate / exchangeRateToBackingPrecision;
     }
 }

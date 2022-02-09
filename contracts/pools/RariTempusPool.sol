@@ -70,23 +70,30 @@ contract RariTempusPool is TempusPool {
         updateInterestRate();
     }
 
-    function depositToUnderlying(uint256 amount) internal override returns (uint256) {
+    function depositToUnderlying(uint256 amountBT)
+        internal
+        override
+        assertTransferBT(amountBT)
+        returns (uint256 mintedYBT)
+    {
         // ETH deposits are not accepted, because it is rejected in the controller
         assert(msg.value == 0);
 
+        uint256 ybtBefore = balanceOfYBT();
+
         // Deposit to Rari Pool
-        IERC20(backingToken).safeIncreaseAllowance(address(rariFundManager), amount);
+        IERC20(backingToken).safeIncreaseAllowance(address(rariFundManager), amountBT);
+        rariFundManager.deposit(IERC20Metadata(backingToken).symbol(), amountBT);
 
-        uint256 preDepositBalance = IERC20(yieldBearingToken).balanceOf(address(this));
-        rariFundManager.deposit(IERC20Metadata(backingToken).symbol(), amount);
-        uint256 postDepositBalance = IERC20(yieldBearingToken).balanceOf(address(this));
-
-        return (postDepositBalance - preDepositBalance);
+        mintedYBT = balanceOfYBT() - ybtBefore;
     }
 
     function withdrawFromUnderlyingProtocol(uint256 yieldBearingTokensAmount, address recipient)
         internal
         override
+        /// exchangeRateToBackingPrecision is used because with Rari there is some dust left due to rounding errors.
+        /// The maximum dust amount is expected to be smaller than exchangeRateToBackingPrecision
+        assertTransferYBT(yieldBearingTokensAmount, exchangeRateToBackingPrecision)
         returns (uint256 backingTokenAmount)
     {
         uint256 rftTotalSupply = IERC20(yieldBearingToken).totalSupply();
@@ -110,7 +117,7 @@ contract RariTempusPool is TempusPool {
     }
 
     /// @return Updated current Interest Rate with the same precision as the BackingToken
-    function updateInterestRate() internal override returns (uint256) {
+    function updateInterestRate() public override returns (uint256) {
         lastCalculatedInterestRate = calculateInterestRate(
             rariFundManager,
             yieldBearingToken,
@@ -127,16 +134,16 @@ contract RariTempusPool is TempusPool {
         return lastCalculatedInterestRate;
     }
 
-    function numAssetsPerYieldToken(uint yieldTokens, uint rate) public view override returns (uint) {
+    function numAssetsPerYieldToken(uint256 yieldTokens, uint256 rate) public view override returns (uint) {
         return yieldTokens.mulfV(rate, exchangeRateONE) / exchangeRateToBackingPrecision;
     }
 
-    function numYieldTokensPerAsset(uint backingTokens, uint rate) public view override returns (uint) {
+    function numYieldTokensPerAsset(uint256 backingTokens, uint256 rate) public view override returns (uint) {
         return backingTokens.divfV(rate, exchangeRateONE) * exchangeRateToBackingPrecision;
     }
 
     /// @dev The rate precision is always 18
-    function interestRateToSharePrice(uint interestRate) internal view override returns (uint) {
+    function interestRateToSharePrice(uint256 interestRate) internal view override returns (uint) {
         return interestRate / exchangeRateToBackingPrecision;
     }
 

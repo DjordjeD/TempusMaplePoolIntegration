@@ -203,6 +203,12 @@ interface ITempusPool is ITempusFees, IVersioned {
         bool toBackingToken
     ) external view returns (uint256);
 
+    /// @dev This updates the underlying pool's interest rate
+    ///      It is done first thing before deposit/redeem to avoid arbitrage
+    ///      It is available to call publically to periodically update interest rates in cases of low volume
+    /// @return Updated current Interest Rate, decimal precision depends on specific TempusPool implementation
+    function updateInterestRate() external returns (uint256);
+
     /// @dev This returns the stored Interest Rate of the YBT (Yield Bearing Token) pool
     ///      it is safe to call this after updateInterestRate() was called
     /// @return Stored Interest Rate, decimal precision depends on specific TempusPool implementation
@@ -236,12 +242,12 @@ interface ITempusPool is ITempusFees, IVersioned {
     /// @param yieldTokens Amount of YBT in YBT decimal precision
     /// @param interestRate The current interest rate
     /// @return Amount of Backing Tokens for specified @param yieldTokens
-    function numAssetsPerYieldToken(uint yieldTokens, uint interestRate) external view returns (uint);
+    function numAssetsPerYieldToken(uint256 yieldTokens, uint256 interestRate) external view returns (uint256);
 
     /// @dev This returns amount of YBT (Yield Bearing Tokens) that can be converted
     ///      from @param backingTokens Backing Tokens
     /// @param backingTokens Amount of Backing Tokens in BT decimal precision
     /// @param interestRate The current interest rate
     /// @return Amount of YBT for specified @param backingTokens
-    function numYieldTokensPerAsset(uint backingTokens, uint interestRate) external view returns (uint);
+    function numYieldTokensPerAsset(uint256 backingTokens, uint256 interestRate) external view returns (uint256);
 }

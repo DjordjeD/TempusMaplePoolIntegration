@@ -50,22 +50,28 @@ contract CompoundTempusPool is TempusPool {
         require(token.comptroller().enterMarkets(markets)[0] == 0, "enterMarkets failed");
     }
 
-    function depositToUnderlying(uint256 backingAmount) internal override returns (uint256) {
+    function depositToUnderlying(uint256 amountBT)
+        internal
+        override
+        assertTransferBT(amountBT)
+        returns (uint256 mintedYBT)
+    {
         // ETH deposits are not accepted, because it is rejected in the controller
         assert(msg.value == 0);
 
-        uint preDepositBalance = IERC20(yieldBearingToken).balanceOf(address(this));
+        uint256 ybtBefore = balanceOfYBT();
 
         // Deposit to Compound
-        IERC20(backingToken).safeIncreaseAllowance(yieldBearingToken, backingAmount);
-        require(ICErc20(yieldBearingToken).mint(backingAmount) == 0, "CErc20 mint failed");
+        IERC20(backingToken).safeIncreaseAllowance(yieldBearingToken, amountBT);
+        require(ICErc20(yieldBearingToken).mint(amountBT) == 0, "CErc20 mint failed");
 
-        return IERC20(yieldBearingToken).balanceOf(address(this)) - preDepositBalance;
+        mintedYBT = balanceOfYBT() - ybtBefore;
     }
 
     function withdrawFromUnderlyingProtocol(uint256 yieldBearingTokensAmount, address recipient)
         internal
         override
+        assertTransferYBT(yieldBearingTokensAmount, 1)
         returns (uint256 backingTokenAmount)
     {
         // tempus pool owns YBT
@@ -79,7 +85,7 @@ contract CompoundTempusPool is TempusPool {
 
     /// @return Updated current Interest Rate in 10**(18 - 8 + Underlying Token Decimals) decimal precision
     ///         This varying rate enables simple conversion from Compound cToken to backing token precision
-    function updateInterestRate() internal override returns (uint256) {
+    function updateInterestRate() public override returns (uint256) {
         // NOTE: exchangeRateCurrent() will accrue interest and gets the latest Interest Rate
         //       The default exchange rate for Compound is 0.02 and grows
         //       cTokens are minted as (backingAmount / rate), so 1 DAI = 50 cDAI with 0.02 rate
@@ -94,17 +100,17 @@ contract CompoundTempusPool is TempusPool {
 
     // NOTE: yieldTokens are in YieldToken precision, return value is in BackingToken precision
     //       This conversion happens automatically due to pre-scaled rate
-    function numAssetsPerYieldToken(uint yieldTokens, uint rate) public pure override returns (uint) {
+    function numAssetsPerYieldToken(uint256 yieldTokens, uint256 rate) public pure override returns (uint256) {
         return yieldTokens.mulfV(rate, 1e18);
     }
 
     // NOTE: backingTokens are in BackingToken precision, return value is in YieldToken precision
     //       This conversion happens automatically due to pre-scaled rate
-    function numYieldTokensPerAsset(uint backingTokens, uint rate) public pure override returns (uint) {
+    function numYieldTokensPerAsset(uint256 backingTokens, uint256 rate) public pure override returns (uint256) {
         return backingTokens.divfV(rate, 1e18);
     }
 
-    function interestRateToSharePrice(uint interestRate) internal pure override returns (uint) {
+    function interestRateToSharePrice(uint256 interestRate) internal pure override returns (uint256) {
         // rate is always (10 + backing.decimals), so converting back is always 1e10
         return interestRate / 1e10;
     }
