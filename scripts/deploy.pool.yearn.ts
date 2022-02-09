@@ -70,7 +70,6 @@ async function deploy() {
   ];
 
 
-
   console.log(chalk.yellow(`${CONTRACT_NAME} constructor arguments: `));
   console.log(chalk.green(JSON.stringify(poolConstructorArgs)));
   if (!(await utils.toggleConfirm("Do you confirm the constructor arguments?"))) {
@@ -95,14 +94,14 @@ async function deploy() {
     process.exit(0)
   }
 
-  // const tempusPoolContract = await utils.deployContract(CONTRACT_NAME, poolConstructorArgs, deployerPrivateKey);
-  // await utils.waitForContractToBeDeployed(tempusPoolContract.address);
+  const tempusPoolContract = await utils.deployContract(CONTRACT_NAME, poolConstructorArgs, deployerPrivateKey);
+  await utils.waitForContractToBeDeployed(tempusPoolContract.address);
 
   const ammConstructorArgs = [
     balancerVault,
     lpName,
     lpSymbol,
-    "0xE4342f955F75608b5899Ce721aD8d9234deC90E4",
+    tempusPoolContract.address,
     amplificationStart,
     amplificationEnd,
     ethers.utils.parseUnits(swapFeePercentage.toString(), 18).toString(),
@@ -115,8 +114,8 @@ async function deploy() {
   const tempusAmmContract = await utils.deployContract("TempusAMM", ammConstructorArgs, deployerPrivateKey, 5500000);
   await utils.waitForContractToBeDeployed(tempusAmmContract.address);
   
-  // await utils.generateDeployment(tempusPoolContract, `${CONTRACT_NAME}_${YBT_SYMBOL}_maturity-${maturityTimestamp}`, network.name);
-  // await utils.generateDeployment(tempusAmmContract, `TempusAMM_${YBT_SYMBOL}_maturity-${maturityTimestamp}`, network.name);
+  await utils.generateDeployment(tempusPoolContract, `${CONTRACT_NAME}_${YBT_SYMBOL}_maturity-${maturityTimestamp}`, network.name);
+  await utils.generateDeployment(tempusAmmContract, `TempusAMM_${YBT_SYMBOL}_maturity-${maturityTimestamp}`, network.name);
 }
 
 
