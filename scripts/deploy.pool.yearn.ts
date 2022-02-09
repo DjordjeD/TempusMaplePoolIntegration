@@ -4,10 +4,10 @@ import * as chalk from "chalk";
 import { generateTempusSharesNames } from '../test/utils/TempusPool';
 
 
-const EXCHANGE_RATE_PRECISION = 18;
-const YBT_PRECISION = 18;
-const YBT_NAME = "DAI yVault";
-const YBT_SYMBOL = "yvDAI";
+const EXCHANGE_RATE_PRECISION = 18; /// TODO: IMPORTANT
+const YBT_PRECISION = 18; /// TODO: IMPORTANT
+const YBT_NAME = "DAI yVault"; /// TODO: IMPORTANT should be constructed using `${yearnVault.token()} yVault`
+const YBT_SYMBOL = "yvDAI"; /// TODO: IMPORTANT should be constructed using `yv${yearnVault.token()}`
 const CONTRACT_NAME = "YearnTempusPool";
 const MONTH = 60 * 60 * 24 * 30;
 
