@@ -1,0 +1,507 @@
+{
+  "address": "0x8c47924b35C3667F59Df579F3ec061F8d7603242",
+  "abi": [
+    {
+      "type": "constructor",
+      "payable": false,
+      "inputs": []
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "Deposited",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "pool",
+          "indexed": true
+        },
+        {
+          "type": "address",
+          "name": "depositor",
+          "indexed": true
+        },
+        {
+          "type": "address",
+          "name": "recipient",
+          "indexed": true
+        },
+        {
+          "type": "uint256",
+          "name": "yieldTokenAmount",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "backingTokenValue",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "shareAmounts",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "interestRate",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "fee",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "OwnershipProposed",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "currentOwner",
+          "indexed": true
+        },
+        {
+          "type": "address",
+          "name": "proposedOwner",
+          "indexed": true
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "OwnershipTransferred",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "previousOwner",
+          "indexed": true
+        },
+        {
+          "type": "address",
+          "name": "newOwner",
+          "indexed": true
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "Redeemed",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "pool",
+          "indexed": true
+        },
+        {
+          "type": "address",
+          "name": "redeemer",
+          "indexed": true
+        },
+        {
+          "type": "address",
+          "name": "recipient",
+          "indexed": true
+        },
+        {
+          "type": "uint256",
+          "name": "principalShareAmount",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "yieldShareAmount",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "yieldTokenAmount",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "backingTokenValue",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "interestRate",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "fee",
+          "indexed": false
+        },
+        {
+          "type": "bool",
+          "name": "isEarlyRedeem",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "acceptOwnership",
+      "constant": false,
+      "payable": false,
+      "inputs": [],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "depositAndFix",
+      "constant": false,
+      "stateMutability": "payable",
+      "payable": true,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "tempusAMM"
+        },
+        {
+          "type": "uint256",
+          "name": "tokenAmount"
+        },
+        {
+          "type": "bool",
+          "name": "isBackingToken"
+        },
+        {
+          "type": "uint256",
+          "name": "minTYSRate"
+        },
+        {
+          "type": "uint256",
+          "name": "deadline"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "depositAndProvideLiquidity",
+      "constant": false,
+      "stateMutability": "payable",
+      "payable": true,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "tempusAMM"
+        },
+        {
+          "type": "uint256",
+          "name": "tokenAmount"
+        },
+        {
+          "type": "bool",
+          "name": "isBackingToken"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "depositBacking",
+      "constant": false,
+      "stateMutability": "payable",
+      "payable": true,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "targetPool"
+        },
+        {
+          "type": "uint256",
+          "name": "backingTokenAmount"
+        },
+        {
+          "type": "address",
+          "name": "recipient"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "depositYieldBearing",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "targetPool"
+        },
+        {
+          "type": "uint256",
+          "name": "yieldTokenAmount"
+        },
+        {
+          "type": "address",
+          "name": "recipient"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "exitAmmGivenAmountsOutAndEarlyRedeem",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "tempusAMM"
+        },
+        {
+          "type": "uint256",
+          "name": "principals"
+        },
+        {
+          "type": "uint256",
+          "name": "yields"
+        },
+        {
+          "type": "uint256",
+          "name": "principalsStaked"
+        },
+        {
+          "type": "uint256",
+          "name": "yieldsStaked"
+        },
+        {
+          "type": "uint256",
+          "name": "maxLpTokensToRedeem"
+        },
+        {
+          "type": "bool",
+          "name": "toBackingToken"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "exitAmmGivenLpAndRedeem",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "tempusAMM"
+        },
+        {
+          "type": "uint256",
+          "name": "lpTokens"
+        },
+        {
+          "type": "uint256",
+          "name": "principals"
+        },
+        {
+          "type": "uint256",
+          "name": "yields"
+        },
+        {
+          "type": "uint256",
+          "name": "minPrincipalsStaked"
+        },
+        {
+          "type": "uint256",
+          "name": "minYieldsStaked"
+        },
+        {
+          "type": "uint256",
+          "name": "maxLeftoverShares"
+        },
+        {
+          "type": "uint256",
+          "name": "yieldsRate"
+        },
+        {
+          "type": "uint256",
+          "name": "maxSlippage"
+        },
+        {
+          "type": "bool",
+          "name": "toBackingToken"
+        },
+        {
+          "type": "uint256",
+          "name": "deadline"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "exitTempusAMM",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "tempusAMM"
+        },
+        {
+          "type": "uint256",
+          "name": "lpTokensAmount"
+        },
+        {
+          "type": "uint256",
+          "name": "principalAmountOutMin"
+        },
+        {
+          "type": "uint256",
+          "name": "yieldAmountOutMin"
+        },
+        {
+          "type": "bool",
+          "name": "toInternalBalances"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "owner",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [],
+      "outputs": [
+        {
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "provideLiquidity",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "tempusAMM"
+        },
+        {
+          "type": "uint256",
+          "name": "sharesAmount"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "redeemToBacking",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "targetPool"
+        },
+        {
+          "type": "uint256",
+          "name": "principalAmount"
+        },
+        {
+          "type": "uint256",
+          "name": "yieldAmount"
+        },
+        {
+          "type": "address",
+          "name": "recipient"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "redeemToYieldBearing",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "targetPool"
+        },
+        {
+          "type": "uint256",
+          "name": "principalAmount"
+        },
+        {
+          "type": "uint256",
+          "name": "yieldAmount"
+        },
+        {
+          "type": "address",
+          "name": "recipient"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "register",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "authorizedContract"
+        },
+        {
+          "type": "bool",
+          "name": "isValid"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "transferOwnership",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "newOwner"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "version",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [],
+      "outputs": [
+        {
+          "type": "tuple",
+          "components": [
+            {
+              "type": "uint16",
+              "name": "major"
+            },
+            {
+              "type": "uint16",
+              "name": "minor"
+            },
+            {
+              "type": "uint16",
+              "name": "patch"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

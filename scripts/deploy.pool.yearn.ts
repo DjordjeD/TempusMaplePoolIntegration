@@ -1,13 +1,12 @@
 import { ethers, network } from 'hardhat';
 import * as utils from './utils';
 import * as chalk from "chalk";
-import { generateTempusSharesNames } from '../test/utils/TempusPool';
 
 
-const EXCHANGE_RATE_PRECISION = 18; /// TODO: IMPORTANT
-const YBT_PRECISION = 18; /// TODO: IMPORTANT
-const YBT_NAME = "DAI yVault"; /// TODO: IMPORTANT should be constructed using `${yearnVault.token()} yVault`
-const YBT_SYMBOL = "yvDAI"; /// TODO: IMPORTANT should be constructed using `yv${yearnVault.token()}`
+const EXCHANGE_RATE_PRECISION = 6; /// TODO: IMPORTANT same as Backing Token precision
+const YBT_PRECISION = 6; /// TODO: IMPORTANT
+const YBT_NAME = "USDC yVault"; /// TODO: IMPORTANT should be constructed using `${yearnVault.token()} yVault`
+const YBT_SYMBOL = "yvUSDC"; /// TODO: IMPORTANT should be constructed using `yv${yearnVault.token()}`
 const CONTRACT_NAME = "YearnTempusPool";
 const MONTH = 60 * 60 * 24 * 30;
 
@@ -48,7 +47,13 @@ async function deploy() {
     )
   ).getTime() / 1000;
   
-  const sharesData = generateTempusSharesNames(YBT_NAME, YBT_SYMBOL, maturityTimestamp)
+  const sharesData = {
+    principalName:   "Tempus Capital Token-FYEUC001",
+    principalSymbol: "tCapital-FYEUC001", 
+    yieldName:       "Tempus Yield Token-FYEUC001",
+    yieldSymbol:     "tYield-FYEUC001"
+  }; /// TODO: IMPORTANT swap values
+
   const poolConstructorArgs = [
     yearnVault,
     tempusController,
