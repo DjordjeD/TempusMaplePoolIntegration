@@ -71,6 +71,13 @@ async function setupWithRariWithdrawalFee(rariFee: BigNumberish) {
 }
 
 describe('TempusPool <> Rari', function () {
+  // cache 0% rari pool to avoid random timeouts
+  describe('Verify deployment', () => {
+    it ("Deployment", async () => {
+      await setupWithRariWithdrawalFee(0);
+    });
+  });
+
   describe('Verifies that depositing directly to Rari accrues equal interest compared to depositing via TempusPool', async () => {
     it("0% Rari Withdrawal Fee", async () => {
       await testInterestDirectlyToProtocolMatchesViaTempus(0);
