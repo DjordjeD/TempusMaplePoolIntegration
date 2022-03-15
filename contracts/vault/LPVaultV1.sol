@@ -172,12 +172,17 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
 
         // Redeem all LP tokens
         uint256 maxLpTokensToRedeem = IERC20(address(amm)).balanceOf(address(this));
-        controller.exitTempusAMM(amm, pool, maxLpTokensToRedeem, 1, 1, false);
+        if (maxLpTokensToRedeem > 0) {
+            controller.exitTempusAMM(amm, pool, maxLpTokensToRedeem, 1, 1, false);
+        }
 
         // Withdraw from the Pool
         uint256 principals = IERC20(address(pool.principalShare())).balanceOf(address(this));
         uint256 yields = IERC20(address(pool.yieldShare())).balanceOf(address(this));
-        controller.redeemToYieldBearing(pool, principals, yields, address(this));
+        // Withdraw if any shares are left
+        if ((principals | yields) > 0) {
+            controller.redeemToYieldBearing(pool, principals, yields, address(this));
+        }
     }
 
     /// @return true if the given _amm uses the shares of the given _pool
