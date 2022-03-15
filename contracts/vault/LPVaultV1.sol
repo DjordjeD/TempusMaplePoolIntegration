@@ -74,6 +74,9 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
     /// Deposits `amount` of yield bearing tokens.
     /// @return shares The number of shares acquired.
     function deposit(uint256 amount, address recipient) external returns (uint256 shares) {
+        // Quick exit path.
+        require(!pool.matured(), "No active pool is present.");
+
         shares = previewDeposit(amount);
         require(shares != 0, "No shares have been minted");
 
