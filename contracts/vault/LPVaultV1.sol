@@ -95,8 +95,10 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         _burn(msg.sender, shares);
 
         if (pool.matured()) {
-            // TODO: exitAmmGivenLpAndRedeem
-            assert(false);
+            // Upon maturity withdraw all existing liquidity.
+            exitPool();
+
+            yieldBearingToken.safeTransfer(recipient, amount);
         } else {
             uint256 requiredShares = pool.getSharesAmountForExactTokensOut(amount, false);
 
@@ -164,6 +166,20 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         // FIXME: scale lpTokens with the ratio of principals/yieldsStaked redeemed here
     }
 
+    /// Completely exit the AMM+Pool.
+    function exitPool() private {
+        ITempusController controller = ITempusController(pool.controller());
+
+        // Redeem all LP tokens
+        uint256 maxLpTokensToRedeem = IERC20(address(amm)).balanceOf(address(this));
+        controller.exitTempusAMM(amm, pool, maxLpTokensToRedeem, 1, 1, false);
+
+        // Withdraw from the Pool
+        uint256 principals = IERC20(address(pool.principalShare())).balanceOf(address(this));
+        uint256 yields = IERC20(address(pool.yieldShare())).balanceOf(address(this));
+        controller.redeemToYieldBearing(pool, principals, yields, address(this));
+    }
+
     /// @return true if the given _amm uses the shares of the given _pool
     function isAppropriateAMM(ITempusPool _pool, ITempusAMM _amm) private view returns (bool) {
         IPoolShare token0 = _amm.token0();
@@ -186,16 +202,8 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         require(isAppropriateAMM(newPool, newAMM), "AMM is not for the correct Pool");
         // FIXME: validate newStats too
 
-        ITempusController controller = ITempusController(pool.controller());
-
-        // Redeem all LP tokens
-        uint256 maxLpTokensToRedeem = IERC20(address(amm)).balanceOf(address(this));
-        controller.exitTempusAMM(amm, pool, maxLpTokensToRedeem, 1, 1, false);
-
-        // Withdraw from the Pool
-        uint256 principals = IERC20(address(pool.principalShare())).balanceOf(address(this));
-        uint256 yields = IERC20(address(pool.yieldShare())).balanceOf(address(this));
-        controller.redeemToYieldBearing(pool, principals, yields, address(this));
+        // Withdraw from current pool
+        exitPool();
 
         uint256 amount = yieldBearingToken.balanceOf(address(this));
 
@@ -258,6 +266,7 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         //        tokenAmount += (yields + lpYields) * pool.yeldShare().getPricePerFullShareStored();
 
         // TODO: what do with stray tokens?
+        // NOTE: this is also the code path making sure withdrawal works post-maturity
         tokenAmount += yieldBearingToken.balanceOf(address(this));
     }
 
