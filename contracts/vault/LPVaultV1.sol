@@ -222,22 +222,6 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         stats = newStats;
     }
 
-    function tokens()
-        private
-        view
-        returns (
-            IERC20 yieldBearing,
-            IERC20 principalShare,
-            IERC20 yieldShare,
-            IERC20 lpToken
-        )
-    {
-        yieldBearing = IERC20(pool.yieldBearingToken());
-        principalShare = IERC20(address(pool.principalShare()));
-        yieldShare = IERC20(address(pool.yieldShare()));
-        lpToken = IERC20(address(amm));
-    }
-
     /// @return tokenAmount the current total balance in terms of YBT held by the vault
     function totalAssets() private view returns (uint256 tokenAmount) {
         uint256 lpTokens = IERC20(address(amm)).balanceOf(address(this));
@@ -258,60 +242,8 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
             false
         );
 
-        //        (uint256 lpPrincipals, uint256 lpYields) = amm.compositionBalanceOf(address(this));
-
-        /*(
-	if (pool.matured()) {
-	} else {
-		// If not yet matured, we can only exchange
-		tokenAmount += min(principals + lpPrincipals, yields + lpYields);
-	}
-*/
-        //        tokenAmount += (principals + lpPrincipals) * pool.principalShare().getPricePerFullShareStored();
-        //        tokenAmount += (yields + lpYields) * pool.yeldShare().getPricePerFullShareStored();
-
         // TODO: what do with stray tokens?
         // NOTE: this is also the code path making sure withdrawal works post-maturity
         tokenAmount += yieldBearingToken.balanceOf(address(this));
-    }
-
-    function exitAmm(
-        uint256 principals,
-        uint256 yields,
-        uint256 principalsStaked,
-        uint256 yieldsStaked,
-        uint256 maxLpTokensToRedeem
-    ) private {
-        if (pool.matured()) {
-            ITempusController(pool.controller()).exitAmmGivenLpAndRedeem(
-                amm,
-                pool,
-                maxLpTokensToRedeem,
-                principals,
-                yields,
-                principalsStaked,
-                yieldsStaked,
-                /*maxLeftoverShares*/
-                0, // FIXME
-                /*yieldsRate*/
-                oneYBT, // FIXME
-                /*maxSlippage*/
-                0, // FIXME
-                false,
-                block.timestamp
-            );
-        } else {
-            // TODO: prefer principals outside of the AMM for early redemption
-            ITempusController(pool.controller()).exitAmmGivenAmountsOutAndEarlyRedeem(
-                amm,
-                pool,
-                principals,
-                yields,
-                principalsStaked,
-                yieldsStaked,
-                maxLpTokensToRedeem,
-                false
-            );
-        }
     }
 }
