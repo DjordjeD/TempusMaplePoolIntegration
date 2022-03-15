@@ -91,8 +91,74 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
 
         _burn(msg.sender, shares);
 
-        // TODO: exitAmmGivenAmountsOutAndEarlyRedeem + exitAmmGivenLpAndRedeem
-        assert(false);
+        if (pool.matured()) {
+            // TODO: exitAmmGivenLpAndRedeem
+            assert(false);
+        } else {
+            uint256 requiredShares = pool.getSharesAmountForExactTokensOut(amount, false);
+
+            (
+                uint256 principals,
+                uint256 yields,
+                uint256 principalsStaked,
+                uint256 yieldsStaked,
+                uint256 maxLpTokensToRedeem
+            ) = calculateWithdrawalShareSplit(requiredShares);
+
+            ITempusController(pool.controller()).exitAmmGivenAmountsOutAndEarlyRedeem(
+                amm,
+                pool,
+                principals,
+                yields,
+                principalsStaked,
+                yieldsStaked,
+                maxLpTokensToRedeem,
+                false
+            );
+        }
+    }
+
+    // FIXME: move to some generic helper file
+    function min(uint256 a, uint256 b) private pure returns (uint256 c) {
+        c = (a < b) ? a : b;
+    }
+
+    /// This function calculates the "optimal" share split for withdrawals. It prefers
+    /// unstaked principals/yields for efficiency.
+    function calculateWithdrawalShareSplit(uint256 requiredShares)
+        private
+        view
+        returns (
+            uint256 principals,
+            uint256 yields,
+            uint256 principalsStaked,
+            uint256 yieldsStaked,
+            uint256 lpTokens
+        )
+    {
+        (principalsStaked, yieldsStaked) = amm.compositionBalanceOf(address(this));
+        lpTokens = IERC20(address(amm)).balanceOf(address(this));
+        principals = IERC20(address(pool.principalShare())).balanceOf(address(this));
+        yields = IERC20(address(pool.yieldShare())).balanceOf(address(this));
+
+        if (requiredShares > principals) {
+            principalsStaked = min(requiredShares - principals, principalsStaked);
+        } else {
+            principals = requiredShares;
+            principalsStaked = 0;
+        }
+
+        if (requiredShares > yields) {
+            yieldsStaked = min(requiredShares - yields, yieldsStaked);
+        } else {
+            yields = requiredShares;
+            yieldsStaked = 0;
+        }
+
+        require((principals + principalsStaked) >= requiredShares, "Not enough principals.");
+        require((yields + yieldsStaked) >= requiredShares, "Not enough yields.");
+
+        // FIXME: scale lpTokens with the ratio of principals/yieldsStaked redeemed here
     }
 
     /// @return true if the given _amm uses the shares of the given _pool
