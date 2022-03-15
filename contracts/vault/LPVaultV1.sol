@@ -89,15 +89,18 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
     /// Withdraws `shares` of LPVault tokens.
     /// @return amount The number of yield bearing tokens acquired.
     function withdraw(uint256 shares, address recipient) external returns (uint256 amount) {
+        if (pool.matured()) {
+            // Upon maturity withdraw all existing liquidity.
+            // Doing this prior to totalAssets for less calculation risk.
+            exitPool();
+        }
+
         amount = previewWithdraw(shares);
         require(amount != 0, "No shares would be burned");
 
         _burn(msg.sender, shares);
 
         if (pool.matured()) {
-            // Upon maturity withdraw all existing liquidity.
-            exitPool();
-
             yieldBearingToken.safeTransfer(recipient, amount);
         } else {
             uint256 requiredShares = pool.getSharesAmountForExactTokensOut(amount, false);
