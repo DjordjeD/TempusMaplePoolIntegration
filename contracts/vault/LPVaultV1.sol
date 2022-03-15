@@ -46,7 +46,7 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         string memory name,
         string memory symbol
     ) ERC20OwnerMintableToken(name, symbol) {
-        require(isAppropriateAMM(_pool, _amm), "AMM is not for the correct Pool");
+        require(isTempusPoolAMM(_pool, _amm), "AMM is not for the correct Pool");
         pool = _pool;
         amm = _amm;
         stats = _stats;
@@ -188,8 +188,8 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         }
     }
 
-    /// @return true if the given _amm uses the shares of the given _pool
-    function isAppropriateAMM(ITempusPool _pool, ITempusAMM _amm) private view returns (bool) {
+    /// @return true if given TempusAMM uses shares of the given TempusPool.
+    function isTempusPoolAMM(ITempusPool _pool, ITempusAMM _amm) private view returns (bool) {
         IPoolShare token0 = _amm.token0();
         IPoolShare token1 = _amm.token1();
         IPoolShare principalShare = _pool.principalShare();
@@ -207,7 +207,7 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         require(pool.matured(), "Current Pool has not matured yet");
 
         require(newPool.yieldBearingToken() == address(yieldBearingToken), "The YieldBearingToken must be the same");
-        require(isAppropriateAMM(newPool, newAMM), "AMM is not for the correct Pool");
+        require(isTempusPoolAMM(newPool, newAMM), "AMM is not for the correct Pool");
         // FIXME: validate newStats too
 
         // Withdraw from current pool
