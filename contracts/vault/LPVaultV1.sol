@@ -53,6 +53,8 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         yieldBearingToken = IERC20(pool.yieldBearingToken());
         tokenDecimals = IERC20Metadata(address(yieldBearingToken)).decimals();
         oneYBT = 10**tokenDecimals;
+        // Unlimited approval.
+        yieldBearingToken.safeApprove(pool.controller(), type(uint256).max);
     }
 
     function decimals() public view virtual override returns (uint8) {
@@ -216,10 +218,14 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         uint256 amount = yieldBearingToken.balanceOf(address(this));
 
         // Deposit all yield bearing tokens to new pool
+        // Unlimited approval.
+        yieldBearingToken.safeApprove(newPool.controller(), type(uint256).max);
         ITempusController(newPool.controller()).depositAndProvideLiquidity(newAMM, newPool, amount, false);
 
         // NOTE: at this point any leftover shares will be "lost"
         // FIXME: decide what to do with leftover lp/principal/yield shares
+        // Remove unlimited approval
+        yieldBearingToken.safeApprove(pool.controller(), 0);
         pool = newPool;
         amm = newAMM;
         stats = newStats;
