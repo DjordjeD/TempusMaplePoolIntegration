@@ -45,7 +45,7 @@ describeForEachPool("LPVault", (testFixture:PoolTestFixture) =>
     const tempusAMM = testFixture.amm;
     [owner, user, user1] = testFixture.signers;
 
-    await testFixture.setupAccounts(owner, [[owner, 100000], [user, 100000]]);
+    await testFixture.setupAccounts(owner, [[owner, 100_000], [user, 100_000]]);
 
     const depositAmount = 1_000_000;
     await testFixture.deposit(owner, depositAmount);
@@ -67,12 +67,15 @@ describeForEachPool("LPVault", (testFixture:PoolTestFixture) =>
   }
 
   it("Smoke test", async () => {
-    const pool = await createPools({yieldEst:0.1, duration:ONE_MONTH, amplifyStart:5, amplifyEnd:5, ammBalancePrincipal: 10000, ammBalanceYield: 100000});
+    const pool = await createPools({yieldEst:0.1, duration:ONE_MONTH, amplifyStart:5, amplifyEnd:5, ammBalancePrincipal: 10_000, ammBalanceYield: 100_000});
+    console.log(await testFixture.userState(pool.amm.address));
     await createVault(pool.pool, pool.amm);
     console.log(await testFixture.userState(owner));
     expect(await lpVault.balanceOf(owner)).to.equal(0);
     await lpVault.ybt.approve(owner, lpVault.address, 200);
     await lpVault.deposit(owner, 100, owner);
+    console.log(await testFixture.userState(pool.amm.address));
+    console.log(await testFixture.userState(lpVault.address));
     expect(await lpVault.balanceOf(owner)).to.be.within(99.9999, 100.00001);
     await lpVault.deposit(owner, 100, owner);
     expect(await lpVault.balanceOf(owner)).to.be.within(199.9999, 200.00001);

@@ -365,7 +365,7 @@ export abstract class PoolTestFixture {
   /**
    * @returns Balances state for a single user
    */
-  async userState(user:Signer): Promise<UserState> {
+  async userState(user:SignerOrAddress): Promise<UserState> {
     let state = new UserState();
     state.principalShares = Number(await this.principals.balanceOf(user));
     state.yieldShares = Number(await this.yields.balanceOf(user));
