@@ -19,12 +19,12 @@ export class LPVault extends ERC20 {
     return new LPVault("LPVaultV1", await lpVault.decimals(), pool.yieldBearing, lpVault);
   }
 
-  async deposit(caller: Signer, amount: Numberish, recipient: SignerOrAddress): Promise<Numberish> {
-    return this.fromBigNum(await this.connect(caller).deposit(this.ybt.toBigNum(amount), addressOf(recipient)));
+  async deposit(caller: Signer, amount: Numberish, recipient: SignerOrAddress): Promise<void> {
+    await this.connect(caller).deposit(this.ybt.toBigNum(amount), addressOf(recipient));
   }
 
-  async withdraw(caller: Signer, shares: Numberish, recipient: SignerOrAddress): Promise<Numberish> {
-    return this.ybt.fromBigNum(await this.connect(caller).withdraw(this.toBigNum(shares), addressOf(recipient)));
+  async withdraw(caller: Signer, shares: Numberish, recipient: SignerOrAddress): Promise<void> {
+    await this.connect(caller).withdraw(this.toBigNum(shares), addressOf(recipient));
   }
 
   async migrate(caller: Signer, pool: TempusPool, amm: TempusAMM, stats: Stats): Promise<void> {
