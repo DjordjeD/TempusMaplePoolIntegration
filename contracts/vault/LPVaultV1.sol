@@ -33,11 +33,19 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
 
     IERC20 public immutable yieldBearingToken;
     uint256 private immutable oneYBT;
+    uint256 private immutable onePrincipal;
+    uint256 private immutable oneYield;
+    uint256 private immutable oneLP;
 
     ITempusPool public pool;
     ITempusAMM public amm;
     // TODO: remove dependency on stats
     Stats public stats;
+
+    bool public isShutdown;
+
+    mapping(address => uint256) public withdrawalRequests;
+    uint256 public totalWithdrawalRequest;
 
     constructor(
         ITempusPool _pool,
@@ -53,6 +61,9 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         yieldBearingToken = IERC20(pool.yieldBearingToken());
         tokenDecimals = IERC20Metadata(address(yieldBearingToken)).decimals();
         oneYBT = 10**tokenDecimals;
+        onePrincipal = 10**IERC20Metadata(address(pool.principalShare())).decimals();
+        oneYield = 10**IERC20Metadata(address(pool.principalShare())).decimals();
+        oneLP = 10**IERC20Metadata(address(_amm)).decimals();
         // Unlimited approval.
         yieldBearingToken.safeApprove(pool.controller(), type(uint256).max);
     }
@@ -77,13 +88,16 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
     /// @return shares The number of shares acquired.
     function deposit(uint256 amount, address recipient) external returns (uint256 shares) {
         // Quick exit path.
-        require(!pool.matured(), "No active pool is present.");
+        require(!isShutdown, "Vault is shut down.");
+        //        require(!pool.matured(), "No active pool is present.");
 
         shares = previewDeposit(amount);
         require(shares != 0, "No shares have been minted");
 
         yieldBearingToken.safeTransferFrom(msg.sender, address(this), amount);
-        ITempusController(pool.controller()).depositAndProvideLiquidity(amm, pool, amount, false);
+        if (!pool.matured()) {
+            ITempusController(pool.controller()).depositAndProvideLiquidity(amm, pool, amount, false);
+        }
 
         _mint(recipient, shares);
     }
@@ -91,6 +105,8 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
     /// Withdraws `shares` of LPVault tokens.
     /// @return amount The number of yield bearing tokens acquired.
     function withdraw(uint256 shares, address recipient) external returns (uint256 amount) {
+        //        if (withdrawalRequests[msg.sender]) {}
+
         if (pool.matured()) {
             // Upon maturity withdraw all existing liquidity.
             // Doing this prior to totalAssets for less calculation risk.
@@ -216,11 +232,18 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         exitPool();
 
         uint256 amount = yieldBearingToken.balanceOf(address(this));
+        //        if (amount > totalWithdrawalRequest) {
+        //            amount -= totalWithdrawalRequest;
+        //        } else {
+        //            amount = 0;
+        //        }
 
         // Deposit all yield bearing tokens to new pool
         // Unlimited approval.
         yieldBearingToken.safeApprove(newPool.controller(), type(uint256).max);
-        ITempusController(newPool.controller()).depositAndProvideLiquidity(newAMM, newPool, amount, false);
+        if (amount > 0) {
+            ITempusController(newPool.controller()).depositAndProvideLiquidity(newAMM, newPool, amount, false);
+        }
 
         // NOTE: at this point any leftover shares will be "lost"
         // FIXME: decide what to do with leftover lp/principal/yield shares
@@ -231,8 +254,14 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         stats = newStats;
     }
 
+    function shutdown() external onlyOwner {
+        // exit pools
+
+        isShutdown = true;
+    }
+
     /// @return tokenAmount the current total balance in terms of YBT held by the vault
-    function totalAssets() private view returns (uint256 tokenAmount) {
+    function totalAssetsOld() private view returns (uint256 tokenAmount) {
         uint256 lpTokens = IERC20(address(amm)).balanceOf(address(this));
         uint256 principals = IERC20(address(pool.principalShare())).balanceOf(address(this));
         uint256 yields = IERC20(address(pool.yieldShare())).balanceOf(address(this));
@@ -254,5 +283,29 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         // TODO: what do with stray tokens?
         // NOTE: this is also the code path making sure withdrawal works post-maturity
         tokenAmount += yieldBearingToken.balanceOf(address(this));
+    }
+
+    function totalAssets() private view returns (uint256 tokenAmount) {
+        return pricePerShare() * totalSupply();
+    }
+
+    function pricePerShare() public view returns (uint256 rate) {
+        uint256 ybtBalance = yieldBearingToken.balanceOf(address(this));
+        uint256 lpTokens = IERC20(address(amm)).balanceOf(address(this));
+        uint256 principals = IERC20(address(pool.principalShare())).balanceOf(address(this));
+        uint256 yields = IERC20(address(pool.yieldShare())).balanceOf(address(this));
+
+        uint256 supply = totalSupply();
+        (rate, , , , ) = stats.estimateExitAndRedeem(
+            amm,
+            pool,
+            lpTokens.divfV(supply, oneLP),
+            principals.divfV(supply, onePrincipal),
+            yields.divfV(supply, oneYield),
+            /*threshold*/
+            0,
+            false
+        );
+        rate += ybtBalance.divfV(supply, oneYBT);
     }
 }
