@@ -33,8 +33,7 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
 
     IERC20 public immutable yieldBearingToken;
     uint256 private immutable oneYBT;
-    uint256 private immutable onePrincipal;
-    uint256 private immutable oneYield;
+    uint256 private immutable onePoolShare;
     uint256 private immutable oneLP;
 
     ITempusPool public pool;
@@ -60,10 +59,16 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         stats = _stats;
         yieldBearingToken = IERC20(pool.yieldBearingToken());
         tokenDecimals = IERC20Metadata(address(yieldBearingToken)).decimals();
+
         oneYBT = 10**tokenDecimals;
-        onePrincipal = 10**IERC20Metadata(address(pool.principalShare())).decimals();
-        oneYield = 10**IERC20Metadata(address(pool.principalShare())).decimals();
-        oneLP = 10**IERC20Metadata(address(_amm)).decimals();
+        assert(
+            IERC20Metadata(address(pool.principalShare())).decimals() ==
+                IERC20Metadata(address(pool.yieldShare())).decimals()
+        );
+        onePoolShare = 10**IERC20Metadata(address(pool.principalShare())).decimals();
+        // NOTE: this should be 18 decimals in every case, but asserting has the same cost
+        oneLP = 10**IERC20Metadata(address(amm)).decimals();
+
         // Unlimited approval.
         yieldBearingToken.safeApprove(pool.controller(), type(uint256).max);
     }
@@ -300,10 +305,10 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
             amm,
             pool,
             lpTokens.divfV(supply, oneLP),
-            principals.divfV(supply, onePrincipal),
-            yields.divfV(supply, oneYield),
+            principals.divfV(supply, onePoolShare),
+            yields.divfV(supply, onePoolShare),
             /*threshold*/
-            0,
+            10 * onePoolShare,
             false
         );
         rate += ybtBalance.divfV(supply, oneYBT);
