@@ -76,9 +76,9 @@ describeForEachPool("LPVault", (testFixture:PoolTestFixture) =>
     await lpVault.deposit(owner, 100, owner);
     console.log(await testFixture.userState(pool.amm.address));
     console.log(await testFixture.userState(lpVault.address));
-    expect(await lpVault.balanceOf(owner)).to.be.within(99.9999, 100.00001);
+    expect(+await lpVault.balanceOf(owner)).to.be.within(99.9999, 100.00001);
     await lpVault.deposit(owner, 100, owner);
-    expect(await lpVault.balanceOf(owner)).to.be.within(199.9999, 200.00001);
+    expect(+await lpVault.balanceOf(owner)).to.be.within(199.9999, 200.00001);
   });
 
   it("Migrate to self", async () => {
