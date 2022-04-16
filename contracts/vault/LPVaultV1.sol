@@ -11,7 +11,7 @@ import "../utils/Ownable.sol";
 import "../utils/UntrustedERC20.sol";
 import "../ITempusController.sol";
 import "../ITempusPool.sol";
-import "../amm/interfaces/ITempusAMM.sol";
+import "../amm/ITempusAMM.sol";
 import "../stats/Stats.sol";
 
 /// This LP Vault follows a very simple strategy.
