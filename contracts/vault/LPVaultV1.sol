@@ -231,7 +231,10 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         // Only allow migration after maturity to avoid withdrawal risks (loss and/or lockup due to liquidity) from pool.
         require(pool.matured(), "Current Pool has not matured yet");
 
-        require(address(newPool.yieldBearingToken()) == address(yieldBearingToken), "The YieldBearingToken must be the same");
+        require(
+            address(newPool.yieldBearingToken()) == address(yieldBearingToken),
+            "The YieldBearingToken must be the same"
+        );
         require(isTempusPoolAMM(newPool, newAMM), "AMM is not for the correct Pool");
         // FIXME: validate newStats too
 
