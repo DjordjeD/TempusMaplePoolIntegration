@@ -14,6 +14,8 @@ import "../ITempusPool.sol";
 import "../amm/ITempusAMM.sol";
 import "../stats/Stats.sol";
 
+import "hardhat/console.sol";
+
 /// This LP Vault follows a very simple strategy.
 /// TODO: make this EIP4626 compatible
 ///
@@ -32,7 +34,7 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
     uint8 internal immutable tokenDecimals;
 
     IERC20 public immutable yieldBearingToken;
-    uint256 private immutable oneYBT;
+    uint256 private immutable oneYBT; // also equals to oneVaultShare
     uint256 private immutable onePoolShare;
     uint256 private immutable oneLP;
 
@@ -69,6 +71,8 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         // NOTE: this should be 18 decimals in every case, but asserting has the same cost
         oneLP = 10**IERC20Metadata(address(amm)).decimals();
 
+console.log(IERC20Metadata(address(amm)).decimals(), IERC20Metadata(address(pool.principalShare())).decimals(), IERC20Metadata(address(pool.yieldShare())).decimals());
+
         // Unlimited approval.
         yieldBearingToken.safeApprove(pool.controller(), type(uint256).max);
     }
@@ -80,7 +84,8 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
     function previewDeposit(uint256 amount) public view returns (uint256 shares) {
         uint256 supply = totalSupply();
         // TODO: rounding
-        return (supply == 0) ? amount : amount.mulfV(supply, totalAssets());
+        //return (supply == 0) ? amount : amount.mulfV(supply, totalAssets());
+        return (supply == 0) ? amount : amount.mulfV(pricePerShare(), oneYBT);
     }
 
     function previewWithdraw(uint256 shares) public view returns (uint256 amount) {
@@ -99,6 +104,7 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         shares = previewDeposit(amount);
         require(shares != 0, "No shares have been minted");
 
+console.log("depositing", amount, shares);
         yieldBearingToken.safeTransferFrom(msg.sender, address(this), amount);
         if (!pool.matured()) {
             ITempusController(pool.controller()).depositAndProvideLiquidity(amm, pool, amount, false);
@@ -280,16 +286,24 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         uint256 yields = IERC20(address(pool.yieldShare())).balanceOf(address(this));
 
         uint256 supply = totalSupply();
+        require(supply != 0, "PricePerShare for 0 supply is not allowed");
+
+console.log("pricePerShare");
+console.log(lpTokens, principals, yields, supply);
+console.log(lpTokens.divfV(supply, oneLP), principals.divfV(supply, onePoolShare), yields.divfV(supply, onePoolShare));
+
         (rate, , , , ) = stats.estimateExitAndRedeem(
             amm,
             pool,
             lpTokens.divfV(supply, oneLP),
-            principals.divfV(supply, onePoolShare),
-            yields.divfV(supply, onePoolShare),
+            principals.divfV(supply, oneYBT),
+            yields.divfV(supply, oneYBT),
             /*threshold*/
             10 * onePoolShare,
             false
         );
+console.log("estimate rate", rate);
         rate += ybtBalance.divfV(supply, oneYBT);
+console.log("complete rate", rate, ybtBalance);
     }
 }
