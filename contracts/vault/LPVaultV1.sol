@@ -269,31 +269,6 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         isShutdown = true;
     }
 
-    /// @return tokenAmount the current total balance in terms of YBT held by the vault
-    function totalAssetsOld() private view returns (uint256 tokenAmount) {
-        uint256 lpTokens = IERC20(address(amm)).balanceOf(address(this));
-        uint256 principals = IERC20(address(pool.principalShare())).balanceOf(address(this));
-        uint256 yields = IERC20(address(pool.yieldShare())).balanceOf(address(this));
-
-        // TODO: scale this down based on some percentage of the AMM holdings (as opposed to potentially total)
-
-        // TODO: what is a good threshold value?
-        (tokenAmount, , , , ) = stats.estimateExitAndRedeem(
-            amm,
-            pool,
-            lpTokens,
-            principals,
-            yields,
-            /*threshold*/
-            0,
-            false
-        );
-
-        // TODO: what do with stray tokens?
-        // NOTE: this is also the code path making sure withdrawal works post-maturity
-        tokenAmount += yieldBearingToken.balanceOf(address(this));
-    }
-
     function totalAssets() private view returns (uint256 tokenAmount) {
         return pricePerShare() * totalSupply();
     }
