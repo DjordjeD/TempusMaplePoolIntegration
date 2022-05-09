@@ -194,8 +194,6 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
 
     /// Completely exit the AMM+Pool.
     function exitPool() private {
-        ITempusController controller = ITempusController(pool.controller());
-
         // Redeem all LP tokens
         uint256 principals = IERC20(address(pool.principalShare())).balanceOf(address(this));
         uint256 yields = IERC20(address(pool.yieldShare())).balanceOf(address(this));
@@ -209,6 +207,7 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         yields = IERC20(address(pool.yieldShare())).balanceOf(address(this));
         // Withdraw if any shares are left
         if ((principals | yields) > 0) {
+            ITempusController controller = ITempusController(pool.controller());
             controller.redeemToYieldBearing(pool, principals, yields, address(this));
         }
     }
