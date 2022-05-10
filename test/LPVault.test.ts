@@ -77,11 +77,11 @@ describeForEachPool("LPVault", (testFixture:PoolTestFixture) =>
     console.log("after1 amm", await testFixture.userState(pool.amm.address));
     console.log("after1 lpv", await testFixture.userState(lpVault.address));
     console.log(+await lpVault.balanceOf(owner));
-    expect(+await lpVault.balanceOf(owner)).to.be.within(99.9999, 100.00001);
+    expect(+await lpVault.balanceOf(owner)).to.be.within(99.9999, 100.0002);
     await lpVault.deposit(owner, 100, owner);
     console.log("after2 lpv", await testFixture.userState(lpVault.address));
     console.log(+await lpVault.balanceOf(owner));
-    expect(+await lpVault.balanceOf(owner)).to.be.within(199.9999, 200.00001);
+    expect(+await lpVault.balanceOf(owner)).to.be.within(199.9999, 200.0002);
   });
 
   it("Migrate to self", async () => {
