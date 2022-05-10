@@ -14,8 +14,6 @@ import "../ITempusPool.sol";
 import "../amm/ITempusAMM.sol";
 import "../stats/Stats.sol";
 
-import "hardhat/console.sol";
-
 /// This LP Vault follows a very simple strategy.
 /// TODO: make this EIP4626 compatible
 ///
@@ -78,8 +76,6 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         // NOTE: this should be 18 decimals in every case, but asserting has the same cost
         oneLP = 10**IERC20Metadata(address(amm)).decimals();
 
-console.log(IERC20Metadata(address(amm)).decimals(), IERC20Metadata(address(pool.principalShare())).decimals(), IERC20Metadata(address(pool.yieldShare())).decimals());
-
         // Unlimited approval.
         yieldBearingToken.safeApprove(pool.controller(), type(uint256).max);
     }
@@ -111,7 +107,6 @@ console.log(IERC20Metadata(address(amm)).decimals(), IERC20Metadata(address(pool
         shares = previewDeposit(amount);
         require(shares != 0, "No shares have been minted");
 
-console.log("depositing", amount, shares);
         yieldBearingToken.safeTransferFrom(msg.sender, address(this), amount);
         if (!pool.matured()) {
             ITempusController(pool.controller()).depositAndProvideLiquidity(amm, pool, amount, false);
@@ -296,10 +291,6 @@ console.log("depositing", amount, shares);
         uint256 supply = totalSupply();
         require(supply != 0, "PricePerShare for 0 supply is not allowed");
 
-console.log("pricePerShare");
-console.log(lpTokens, principals, yields, supply);
-console.log(lpTokens.divfV(supply, oneLP), principals.divfV(supply, oneYBT), yields.divfV(supply, oneYBT));
-
         (rate, , , , ) = stats.estimateExitAndRedeem(
             amm,
             pool,
@@ -310,8 +301,6 @@ console.log(lpTokens.divfV(supply, oneLP), principals.divfV(supply, oneYBT), yie
             10 * onePoolShare,
             false
         );
-console.log("estimate rate", rate);
         rate += ybtBalance.divfV(supply, oneYBT);
-console.log("complete rate", rate, ybtBalance);
     }
 }
