@@ -78,6 +78,7 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
 
         // Unlimited approval.
         yieldBearingToken.safeApprove(pool.controller(), type(uint256).max);
+        amm.approve(pool.controller(), type(uint256).max);
     }
 
     // This mirrors the decimals of the underlying yield bearing token.
@@ -258,6 +259,7 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         // Deposit all yield bearing tokens to new pool
         // Unlimited approval.
         yieldBearingToken.safeApprove(newPool.controller(), type(uint256).max);
+        newAMM.approve(newPool.controller(), type(uint256).max);
         if (amount > 0) {
             ITempusController(newPool.controller()).depositAndProvideLiquidity(newAMM, newPool, amount, false);
         }
@@ -266,6 +268,7 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         // FIXME: decide what to do with leftover lp/principal/yield shares
         // Remove unlimited approval
         yieldBearingToken.safeApprove(pool.controller(), 0);
+        amm.approve(pool.controller(), 0);
         pool = newPool;
         amm = newAMM;
         stats = newStats;
