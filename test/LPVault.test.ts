@@ -87,9 +87,19 @@ describeForEachPool("LPVault", (testFixture:PoolTestFixture) =>
     expect(+await lpVault.balanceOf(owner)).to.be.within(99.9999, 100.0002);
   });
 
+  it("Early migrate", async () => {
+    const pool = await createPools({yieldEst:0.1, duration:ONE_MONTH, amplifyStart:5, amplifyEnd:5, ammBalancePrincipal: 10000, ammBalanceYield: 100000});
+    await createVault(pool.pool, pool.amm);
+    (await expectRevert(lpVault.migrate(owner, pool.pool, pool.amm, stats)))
+      .to.equal("Current Pool has not matured yet");
+  });
+
   it("Migrate to self", async () => {
-//    const pool = await createPools({yieldEst:0.1, duration:ONE_MONTH, amplifyStart:5, amplifyEnd:5, ammBalancePrincipal: 10000, ammBalanceYield: 100000});
-//    await createVault(pool.pool, pool.amm);
-//    lpVault.migrate(owner, pool.pool, pool.amm, stats);
+    const pool = await createPools({yieldEst:0.1, duration:ONE_MONTH, amplifyStart:5, amplifyEnd:5, ammBalancePrincipal: 10000, ammBalanceYield: 100000});
+    await createVault(pool.pool, pool.amm);
+    await increaseTime(2 * ONE_MONTH);
+    await pool.pool.finalize();
+    expect((await pool.pool.matured()).to.be.true);
+    await lpVault.migrate(owner, pool.pool, pool.amm, stats);
   });
 });
