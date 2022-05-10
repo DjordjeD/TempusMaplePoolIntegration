@@ -44,9 +44,6 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
 
     bool public isShutdown;
 
-    mapping(address => uint256) public withdrawalRequests;
-    uint256 public totalWithdrawalRequest;
-
     // NOTE about decimals
     // BT -- variable
     // YBT -- variable
@@ -119,8 +116,6 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
     /// Withdraws `shares` of LPVault tokens.
     /// @return amount The number of yield bearing tokens acquired.
     function withdraw(uint256 shares, address recipient) external returns (uint256 amount) {
-        //        if (withdrawalRequests[msg.sender]) {}
-
         if (pool.matured()) {
             // Upon maturity withdraw all existing liquidity.
             // Doing this prior to totalAssets for less calculation risk.
@@ -250,11 +245,6 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         exitPool();
 
         uint256 amount = yieldBearingToken.balanceOf(address(this));
-        //        if (amount > totalWithdrawalRequest) {
-        //            amount -= totalWithdrawalRequest;
-        //        } else {
-        //            amount = 0;
-        //        }
 
         // Deposit all yield bearing tokens to new pool
         // Unlimited approval.
