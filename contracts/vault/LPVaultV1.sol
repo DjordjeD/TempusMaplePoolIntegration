@@ -31,6 +31,7 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
     using UntrustedERC20 for IERC20;
     using Fixed256xVar for uint256;
 
+    // The decimals are the same as yield bearing token.
     uint8 internal immutable tokenDecimals;
 
     IERC20 public immutable yieldBearingToken;
@@ -48,6 +49,12 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
     mapping(address => uint256) public withdrawalRequests;
     uint256 public totalWithdrawalRequest;
 
+    // NOTE about decimals
+    // BT -- variable
+    // YBT -- variable
+    // poolShares -- equals BT
+    // LP -- fixed 18
+    // vaultShare -- equals YBT
     constructor(
         ITempusPool _pool,
         ITempusAMM _amm,
@@ -77,6 +84,7 @@ console.log(IERC20Metadata(address(amm)).decimals(), IERC20Metadata(address(pool
         yieldBearingToken.safeApprove(pool.controller(), type(uint256).max);
     }
 
+    // This mirrors the decimals of the underlying yield bearing token.
     function decimals() public view virtual override returns (uint8) {
         return tokenDecimals;
     }
@@ -84,8 +92,7 @@ console.log(IERC20Metadata(address(amm)).decimals(), IERC20Metadata(address(pool
     function previewDeposit(uint256 amount) public view returns (uint256 shares) {
         uint256 supply = totalSupply();
         // TODO: rounding
-        //return (supply == 0) ? amount : amount.mulfV(supply, totalAssets());
-        return (supply == 0) ? amount : amount.mulfV(pricePerShare(), oneYBT);
+        return (supply == 0) ? amount : amount.mulfV(supply, totalAssets());
     }
 
     function previewWithdraw(uint256 shares) public view returns (uint256 amount) {
@@ -276,9 +283,10 @@ console.log("depositing", amount, shares);
     }
 
     function totalAssets() private view returns (uint256 tokenAmount) {
-        return pricePerShare() * totalSupply();
+        return pricePerShare().mulfV(totalSupply(), oneYBT);
     }
 
+    /// Price per share in YBT.
     function pricePerShare() public view returns (uint256 rate) {
         uint256 ybtBalance = yieldBearingToken.balanceOf(address(this));
         uint256 lpTokens = IERC20(address(amm)).balanceOf(address(this));
@@ -290,12 +298,12 @@ console.log("depositing", amount, shares);
 
 console.log("pricePerShare");
 console.log(lpTokens, principals, yields, supply);
-console.log(lpTokens.divfV(supply, oneLP), principals.divfV(supply, onePoolShare), yields.divfV(supply, onePoolShare));
+console.log(lpTokens.divfV(supply, oneLP), principals.divfV(supply, oneYBT), yields.divfV(supply, oneYBT));
 
         (rate, , , , ) = stats.estimateExitAndRedeem(
             amm,
             pool,
-            lpTokens.divfV(supply, oneLP),
+            lpTokens.divfV(supply, oneYBT),
             principals.divfV(supply, oneYBT),
             yields.divfV(supply, oneYBT),
             /*threshold*/
