@@ -87,6 +87,20 @@ describeForEachPool("LPVault", (testFixture:PoolTestFixture) =>
     expect(+await lpVault.balanceOf(owner)).to.be.within(99.9999, 100.0002);
   });
 
+  it("Preview deposit", async () => {
+    const pool = await createPools({yieldEst:0.1, duration:ONE_MONTH, amplifyStart:5, amplifyEnd:5, ammBalancePrincipal: 10_000, ammBalanceYield: 100_000});
+    await createVault(pool.pool, pool.amm);
+    expect(+await lpVault.previewDeposit(owner, 100)).to.be.within(99.9999, 100.0002);
+  });
+
+  it("Preview withdraw", async () => {
+    const pool = await createPools({yieldEst:0.1, duration:ONE_MONTH, amplifyStart:5, amplifyEnd:5, ammBalancePrincipal: 10_000, ammBalanceYield: 100_000});
+    await createVault(pool.pool, pool.amm);
+    await lpVault.ybt.approve(owner, lpVault.address, 200);
+    await lpVault.deposit(owner, 100, owner);
+    expect(+await lpVault.previewWithdraw(owner, 100)).to.be.within(99.9999, 100.0002);
+  });
+
   it("Early migrate", async () => {
     const pool = await createPools({yieldEst:0.1, duration:ONE_MONTH, amplifyStart:5, amplifyEnd:5, ammBalancePrincipal: 10000, ammBalanceYield: 100000});
     await createVault(pool.pool, pool.amm);
