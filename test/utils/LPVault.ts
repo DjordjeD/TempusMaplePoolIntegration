@@ -19,8 +19,16 @@ export class LPVault extends ERC20 {
     return new LPVault("LPVaultV1", await lpVault.decimals(), pool.yieldBearing, lpVault);
   }
 
+  async previewDeposit(caller: Signer, amount: Numberish): Promise<Numberish> {
+    return this.ybt.fromBigNum(await this.connect(caller).previewDeposit(this.ybt.toBigNum(amount)));
+  }
+
   async deposit(caller: Signer, amount: Numberish, recipient: SignerOrAddress): Promise<void> {
     await this.connect(caller).deposit(this.ybt.toBigNum(amount), addressOf(recipient));
+  }
+
+  async previewWithdraw(caller: Signer, shares: Numberish): Promise<Numberish> {
+    return this.ybt.fromBigNum(await this.connect(caller).previewWithdraw(this.ybt.toBigNum(shares)));
   }
 
   async withdraw(caller: Signer, shares: Numberish, recipient: SignerOrAddress): Promise<void> {
@@ -28,6 +36,14 @@ export class LPVault extends ERC20 {
   }
 
   async migrate(caller: Signer, pool: TempusPool, amm: TempusAMM, stats: Stats): Promise<void> {
-    return this.connect(caller).migrate(pool.address, amm.address, stats.address);
+    await this.connect(caller).migrate(pool.address, amm.address, stats.address);
+  }
+
+  async shutdown(caller: Signer): Promise<void> {
+    await this.connect(caller).sthudown();
+  }
+
+  async totalAssets(caller: Signer): Promise<Numberish> {
+    return this.ybt.fromBigNum(await this.connect(caller).totalAssets());
   }
 }
