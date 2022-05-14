@@ -270,12 +270,12 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         isShutdown = true;
     }
 
-    function totalAssets() private view returns (uint256 tokenAmount) {
+    function totalAssets() public view returns (uint256 tokenAmount) {
         return pricePerShare().mulfV(totalSupply(), oneYBT);
     }
 
     /// Price per share in YBT.
-    function pricePerShare() public view returns (uint256 rate) {
+    function pricePerShare() private view returns (uint256 rate) {
         uint256 ybtBalance = yieldBearingToken.balanceOf(address(this));
         uint256 lpTokens = IERC20(address(amm)).balanceOf(address(this));
         uint256 principals = IERC20(address(pool.principalShare())).balanceOf(address(this));
