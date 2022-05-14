@@ -45,7 +45,9 @@ contract PositionManager is IPositionManager, ERC721, ReentrancyGuard {
                 ? tempusPool.backingToken()
                 : tempusPool.yieldBearingToken();
 
-            if (address(depositedAsset) != address(0)) {
+            if (address(depositedAsset) == address(0)) {
+                assert(tokenAmountToDeposit == params.tokenAmountToDeposit);
+            } else {
                 tokenAmountToDeposit = depositedAsset.untrustedTransferFrom(
                     msg.sender,
                     address(this),
