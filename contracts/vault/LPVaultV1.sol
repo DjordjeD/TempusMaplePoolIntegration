@@ -257,7 +257,7 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         // NOTE: at this point any leftover shares will be "lost"
         // FIXME: decide what to do with leftover lp/principal/yield shares
         // Remove unlimited approval
-        yieldBearingToken.safeApprove(pool.controller(), 0);
+        //yieldBearingToken.safeApprove(pool.controller(), 0);
         amm.approve(pool.controller(), 0);
         pool = newPool;
         amm = newAMM;
