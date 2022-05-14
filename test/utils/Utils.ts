@@ -5,14 +5,14 @@ import { BigNumber, Contract } from "ethers";
 /**
  * @returns Latest timestamp of the blockchain
  */
-export async function blockTimestamp() : Promise<number> {
+export async function blockTimestamp(): Promise<number> {
   return (await ethers.provider.getBlock('latest')).timestamp;
 }
 
 /**
  * Mines a block
  */
- export async function evmMine(): Promise<void> {
+export async function evmMine(): Promise<void> {
   await ethers.provider.send("evm_mine", []);
 }
 
@@ -20,22 +20,22 @@ export async function blockTimestamp() : Promise<number> {
  * sets the current EVM automining behavior.
  * if true - a block is mined for every sent transaction (default is true)
  */
- export async function evmSetAutomine(automine: boolean): Promise<void> {
+export async function evmSetAutomine(automine: boolean): Promise<void> {
   await ethers.provider.send("evm_setAutomine", [automine]);
 }
 
 /**
  * Increase current EVM time by seconds
  */
-export async function increaseTime(addSeconds: number) : Promise<void> {
+export async function increaseTime(addSeconds: number): Promise<void> {
   await ethers.provider.send("evm_increaseTime", [addSeconds]);
-  await ethers.provider.send("evm_mine", []);
+  await evmMine();
 }
 
 /**
  * Set current EVM time
  */
-export async function setEvmTime(timestamp:number) : Promise<void> {
+export async function setEvmTime(timestamp:number): Promise<void> {
   await setNextBlockTimestamp(timestamp);
   await evmMine();
 }
@@ -43,7 +43,7 @@ export async function setEvmTime(timestamp:number) : Promise<void> {
 /**
  * Set The timestamp of the next block (without mining it)
  */
-export async function setNextBlockTimestamp(timestamp:number) : Promise<void> {
+export async function setNextBlockTimestamp(timestamp:number): Promise<void> {
   await ethers.provider.send("evm_setNextBlockTimestamp", [timestamp]);
 }
 
