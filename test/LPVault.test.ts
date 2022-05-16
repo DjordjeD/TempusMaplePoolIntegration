@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { BigNumber, ethers } from "ethers";
 import { Signer } from "./utils/ContractBase";
 import { TempusPool } from "./utils/TempusPool";
-import { evmMine, evmSetAutomine, expectRevert, increaseTime } from "./utils/Utils";
+import { blockTimestamp, evmMine, evmSetAutomine, expectRevert, increaseTime, setEvmTime } from "./utils/Utils";
 import { TempusAMM } from "./utils/TempusAMM";
 import { describeForEachPool } from "./pool-utils/MultiPoolTestSuite";
 import { PoolTestFixture } from "./pool-utils/PoolTestFixture";
@@ -66,6 +66,7 @@ describeForEachPool("LPVault", (testFixture:PoolTestFixture) =>
     lpVault = await LPVault.create(pool, amm, stats, "Tempus LP Vault", "PVALT");
   }
 
+
   it("Smoke test", async () => {
     const pool = await createPools({yieldEst:0.1, duration:ONE_MONTH, amplifyStart:5, amplifyEnd:5, ammBalancePrincipal: 10_000, ammBalanceYield: 100_000});
     console.log(await testFixture.userState(pool.amm.address));
@@ -111,9 +112,14 @@ describeForEachPool("LPVault", (testFixture:PoolTestFixture) =>
   it("Migrate to self", async () => {
     const pool = await createPools({yieldEst:0.1, duration:ONE_MONTH, amplifyStart:5, amplifyEnd:5, ammBalancePrincipal: 10000, ammBalanceYield: 100000});
     await createVault(pool.pool, pool.amm);
-    await increaseTime(2 * ONE_MONTH);
+    await evmMine(); // force-mine a block to avoid timestamp issues
+    console.log(await blockTimestamp(), await pool.pool.maturityTime());
+//    await increaseTime(10 * ONE_MONTH);
+//    await evmMine();
+    await setEvmTime((+await pool.pool.maturityTime()) + 1);
+    console.log(await blockTimestamp(), await pool.pool.maturityTime());
     await pool.pool.finalize();
-    expect((await pool.pool.matured()).to.be.true);
+    expect(await pool.pool.matured()).to.be.true;
     await lpVault.migrate(owner, pool.pool, pool.amm, stats);
   });
 });

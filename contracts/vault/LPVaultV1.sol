@@ -74,7 +74,8 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
         oneLP = 10**IERC20Metadata(address(amm)).decimals();
 
         // Unlimited approval.
-        yieldBearingToken.safeApprove(pool.controller(), type(uint256).max);
+//        yieldBearingToken.safeApprove(pool.controller(), type(uint256).max);
+        yieldBearingToken.approve(pool.controller(), type(uint256).max);
         amm.approve(pool.controller(), type(uint256).max);
     }
 
@@ -248,7 +249,8 @@ contract LPVaultV1 is ERC20OwnerMintableToken, Ownable {
 
         // Deposit all yield bearing tokens to new pool
         // Unlimited approval.
-        yieldBearingToken.safeApprove(newPool.controller(), type(uint256).max);
+//        yieldBearingToken.safeApprove(newPool.controller(), type(uint256).max);
+        yieldBearingToken.approve(newPool.controller(), type(uint256).max);
         newAMM.approve(newPool.controller(), type(uint256).max);
         if (amount > 0) {
             ITempusController(newPool.controller()).depositAndProvideLiquidity(newAMM, newPool, amount, false);
