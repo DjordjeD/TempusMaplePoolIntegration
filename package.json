@@ -90,6 +90,7 @@
     "echidna-test-assertion:pool:yearn": "echidna-test ./ --contract EchidnaYearnTempusPool --config echidna.config.yaml --test-mode assertion --format text"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.1.0"
+    "@openzeppelin/contracts": "^4.1.0",
+    "glob": "^7.2.0"
   }
 }
