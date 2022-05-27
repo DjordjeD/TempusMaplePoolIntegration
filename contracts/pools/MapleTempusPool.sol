@@ -3,18 +3,21 @@ pragma solidity 0.8.10;
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+
+import "../protocols/maple/IPool.sol";
+
 import "../TempusPool.sol";
 
 contract MapleTempusPool is TempusPool {
     using SafeERC20 for IERC20Metadata;
     using UntrustedERC20 for IERC20Metadata;
 
-    
-    bytes32 public constant override protocolName = "Aave";
+    IPool internal immutable maplePool;
+    //bytes32 public constant override protocolName = "Maple";
     uint256 private immutable exchangeRateToBackingPrecision;
 
     constructor(
-        
+        IPool token,
         address controller,
         uint256 maturity,
         uint256 estYield,
@@ -27,7 +30,7 @@ contract MapleTempusPool is TempusPool {
             IERC20Metadata(token.UNDERLYING_ASSET_ADDRESS()),
             controller,
             maturity,
-            getInitialInterestRate(token),
+            1e12,
             1e18,
             estYield,
             principalsData,
@@ -35,7 +38,7 @@ contract MapleTempusPool is TempusPool {
             maxFeeSetup
         )
     {
-        aavePool = token.POOL();
+        maple = token;
         //decimals precision
         IERC20Metadata backing = IERC20Metadata(token.UNDERLYING_ASSET_ADDRESS());
         uint8 underlyingDecimals = backing.decimals();
@@ -54,13 +57,10 @@ contract MapleTempusPool is TempusPool {
         returns (uint256 mintedYBT)
     {
         // ETH deposits are not accepted, because it is rejected in the controller
-        assert(msg.value == 0);
+        assert(msg.value == amountBT);
 
         uint256 ybtBefore = balanceOfYBT();
-
-        // Deposit to AAVE
-        backingToken.safeIncreaseAllowance(address(aavePool), amountBT);
-        aavePool.deposit(address(backingToken), amountBT, address(this), 0);
+        maplePool.deposit(amountBT);
 
         mintedYBT = balanceOfYBT() - ybtBefore;
     }
@@ -74,27 +74,23 @@ contract MapleTempusPool is TempusPool {
         return aavePool.withdraw(address(backingToken), yieldBearingTokensAmount, recipient);
     }
 
-    function getInitialInterestRate(IAToken token) internal view returns (uint256) {
-        return token.POOL().getReserveNormalizedIncome(token.UNDERLYING_ASSET_ADDRESS()) / 1e9;
-    }
-
     /// @return Updated current Interest Rate as an 1e18 decimal
     function updateInterestRate() public view override returns (uint256) {
         // convert from RAY 1e27 to WAD 1e18 decimal
-        return aavePool.getReserveNormalizedIncome(address(backingToken)) / 1e9;
+        return maplePool.withdrawableFundsOf(controller)/balanceOfYBT() + 1;
     }
 
     /// @return Stored Interest Rate as an 1e18 decimal
     function currentInterestRate() public view override returns (uint256) {
-        return aavePool.getReserveNormalizedIncome(address(backingToken)) / 1e9;
+        return maplePool.withdrawableFundsOf(controller)/balanceOfYBT() + 1;
     }
 
-    /// NOTE: Aave AToken is pegged 1:1 with backing token
+    /// NOTE: Maple PoolFDT is pegged 1:1 with backing token
     function numAssetsPerYieldToken(uint256 yieldTokens, uint256) public pure override returns (uint256) {
         return yieldTokens;
     }
 
-    /// NOTE: Aave AToken is pegged 1:1 with backing token
+    /// NOTE: Maple PoolFDT is pegged 1:1 with backing token
     function numYieldTokensPerAsset(uint256 backingTokens, uint256) public pure override returns (uint256) {
         return backingTokens;
     }
