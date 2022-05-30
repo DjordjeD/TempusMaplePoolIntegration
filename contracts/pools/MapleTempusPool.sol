@@ -15,7 +15,9 @@ contract MapleTempusPool is TempusPool {
     IPool internal immutable maplePool;
     //bytes32 public constant override protocolName = "Maple";
     uint256 private immutable exchangeRateToBackingPrecision;
-
+    /// @dev Error thrown when the `withdrawFromUnderlyingProtocol` method is called for Lido pool
+    error MapleWithdrawNotSupported();
+    
     constructor(
         IPool token,
         address controller,
@@ -27,7 +29,7 @@ contract MapleTempusPool is TempusPool {
     )
         TempusPool(
             IERC20Metadata(address(token)),
-            IERC20Metadata(token.UNDERLYING_ASSET_ADDRESS()),
+            IERC20Metadata(address(token.liquidityAsset())),
             controller,
             maturity,
             1e12,
@@ -38,9 +40,9 @@ contract MapleTempusPool is TempusPool {
             maxFeeSetup
         )
     {
-        maple = token;
+        maplePool = token;
         //decimals precision
-        IERC20Metadata backing = IERC20Metadata(token.UNDERLYING_ASSET_ADDRESS());
+        IERC20Metadata backing = IERC20Metadata(address(maplePool.liquidityAsset()));
         uint8 underlyingDecimals = backing.decimals();
         if (underlyingDecimals > 18) {
             revert MoreThanMaximumExpectedDecimals(backing, underlyingDecimals, 18);
@@ -50,6 +52,7 @@ contract MapleTempusPool is TempusPool {
         }
     }
 
+    
     function depositToUnderlying(uint256 amountBT)
         internal
         override
@@ -71,7 +74,8 @@ contract MapleTempusPool is TempusPool {
         assertTransferYBT(yieldBearingTokensAmount, 1)
         returns (uint256)
     {
-        return aavePool.withdraw(address(backingToken), yieldBearingTokensAmount, recipient);
+        revert MapleWithdrawNotSupported();
+        return 0;
     }
 
     /// @return Updated current Interest Rate as an 1e18 decimal

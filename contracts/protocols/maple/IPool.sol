@@ -35,7 +35,7 @@ interface IPool is IERC20, IERC20Metadata {
     function withdrawableFundsOf(address owner) external view returns (uint256);
 
 
-
+    function liquidityAsset() external view returns (IERC20);
 
 
 }
